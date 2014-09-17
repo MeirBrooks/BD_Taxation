@@ -27,7 +27,7 @@ global lastyear_pay 2013
 // get challan info for making date
 use "`PAYDATA'/Latest Software Output/`date'NewPMTChallan.dta", clear
 renvars, lo
-pause
+*pause
 *Gen variable to record payment amount according to challan form
 if `date'==20130529 | `date'==20131114{
 	rename filerpaidamount challan_payment
@@ -160,7 +160,17 @@ replace yychal = yychal - 1 if yychal == real(substr("`UpdateDate'",1,4)) & mmch
 *replace mmchal = mm if !missing(mm) 
 
 //makeQuarter2 mmchal daychal, output(quarter) yearin(yychal)
-makePeriod mmchal daychal, output(period) yearin(yychal)
+makePeriod mmchal daychal, output(period) yearin(yychal) // DCW: FROM ES USES CHALLAN DATE (WHAT IS USED FOR ANALYSIS AS OF 9/15/2014
+
+
+//DO THIS BY DATA ENTRY DATE (DCW)
+gen entrydate2 = date(entrydate,"DMY",2014) // generate date variable from string
+format entrydate2 %td
+
+gen day_entry  = day(entrydate2)
+gen mnth_entry = month(entrydate2)
+gen year_entry = year(entrydate2)
+makePeriod mnth_entry day_entry, output(period_entry) yearin(year_entry) // DCW: USES ENTRY DATE AS PERIOD (USES YYCHAL AS YEAR FOR NOW TO KEEP OTHER CODE FROM BRAEKING)
 
 //If you want to do this by day
 makeDay mmchal daychal, output(day_period) yearin(yychal) 
@@ -168,6 +178,8 @@ makeDay mmchal daychal, output(day_period) yearin(yychal)
 //If you want to use the "for payment" comment this out and comment the previous line
 *gen dd =1
 *makePeriod mm dd, output(period) yearin(yy)
+
+ 
 
 //This is just to check the dates 
 *save "`PAYDATA'/Latest Software Output/`date'check.dta", replace 
@@ -245,7 +257,7 @@ restore
 ********************************************************
 
 
-
+di "`PAYDATA'"
 // add on presoftware data 
 append using "`PAYDATA'/Pre Software Data/presoftware_to_merge.dta", gen(pre_software)
 
@@ -254,7 +266,7 @@ duplicates drop bin yychal_p period day VATContribution, force
 // get rid of returns with no bin
 drop if bin == . | bin<0
 
-
+//Create Date Variable for Entry for presoftware data (Can definitely clean this up with some Stata date work)
 gen entry=entrydate
 replace entry=entrydatechal if missing(entry)
 replace entry = substr(entry,1,9)
@@ -283,30 +295,36 @@ replace entry_month = month_replace if regexm(entry,"/")
 //saveold "`PAYDATA'\all_payments_pre_bin_collapse.dta", replace 
 *********************************************************************************
 replace VATContribution=0 if missing(VATContribution)
-// turn everything into quperiodsarters
-by bin period yychal_p, sort : egen pVATContribution = sum(VATContribution)
+
+*SET LOCAL TO DO PAYMENT DATE OR ENTRY DATE*
+local P1 period_entry //SET PERIOD VARIABLE (Payment date = period*, Entry date = period_entry)
+local P2 year_entry_p //SET PERIOD YEAR VARIABLE (Payment date = yychal_p*, Entry date = year_entry_p)
+**HOW ORIGINAL ANALYSIS IS DONE
+
+// turn everything into periods/quarters
+by bin `P1' `P2', sort : egen pVATContribution = sum(VATContribution) // analysis by payment date
 
 //save "`PAYDATA'/bin_date_set.dta", replace 
 
 //get number of payments (including 0 payments) and number of payments>0
-by bin period yychal_p, sort : gen num_payments_all=_N
-by bin period yychal_p, sort : egen num_payments_pos = sum(VATContribution>0) 
+by bin `P1' `P2', sort : gen num_payments_all=_N
+by bin `P1' `P2', sort : egen num_payments_pos = sum(VATContribution>0) 
 
 // generate quarterly zero returns
 replace zeroreturn = "1" if zeroreturn == "Yes" | zeroreturn == "yes"
 replace zeroreturn = "0" if zeroreturn == "No"  | zeroreturn == "no"
 replace zeroreturn = "0" if zeroreturn != "1"
 destring zeroreturn,replace
-bys bin period yychal_p : egen pzeroreturn = min(zeroreturn)
+bys bin `P1' `P2' : egen pzeroreturn = min(zeroreturn)
 
-drop if missing(yychal_p) | missing(period)
+drop if missing(`P1') | missing(`P2')
 
 // generate string to reshape and reshape
-g year_period = string(yychal_p) + "_" + string(period)
+g year_period = string(`P2') + "_" + string(`P1')
 
 // drop obs too far in the past
-drop if (yychal_p < $firstyear_pay) | (yychal_p == $firstyear_pay &  period < $firstperiod_pay)
-drop if (yychal_p > $lastyear_pay) 
+drop if (`P2' < $firstyear_pay) | (`P2' == $firstyear_pay &  `P1' < $firstperiod_pay)
+drop if (`P2' > $lastyear_pay) 
 
 replace nam=name_pay if missing(nam) & !missing(name_pay)
 drop name_pay
@@ -342,10 +360,4 @@ g usingnewbin = substr(string(bin),1,1) == "1"
 g usingoldbin = substr(string(bin),1,1) == "5" |  substr(string(bin),1,1) == "9"
 g invalidbin = usingnewbin == 0 & usingoldbin == 0 
 
-//saveold "`PAYDATA'/all_payments_by_bin_`date'.dta", replace
-
-
-
-
-
-
+saveold "`PAYDATA'/all_payments_by_bin_`date'.dta", replace

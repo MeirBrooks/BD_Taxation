@@ -312,9 +312,6 @@ replace removed = mdy(real(substr("`UpdateDate'",5,2)),real(substr("`UpdateDate'
 format removed %d
 drop keep old_data
 
-
-
-
 // update date of registration
 foreach type in new old {
 	sort `type'bin
@@ -334,8 +331,6 @@ label var mostrecent "Most recent registration"
 
 gsort -mostrecent 
 duplicates drop id newbin oldbin, force
-
-
 
 // save 
 order id oldbin newbin datsort mostrecent

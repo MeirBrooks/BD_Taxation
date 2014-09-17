@@ -76,10 +76,13 @@ merge m:1 id using `letter'
 
 drop if missing(id) | instudy==0
 
-save "C:\Users\Evan\Dropbox\BD Taxation\Code\analysis\Code\es_explore\payments_with_id.dta", replace 
+*save "C:\Users\Evan\Dropbox\BD Taxation\Code\analysis\Code\es_explore\payments_with_id.dta", replace 
+save "X:\BD Taxation\Code\analysis\Code\es_explore\payments_with_id.dta", replace
 save "`PAYDATA'\payments_pre_bin_collapse_with_id.dta", replace 
 
-use "C:\Users\Evan\Dropbox\BD Taxation\Code\analysis\Code\es_explore\payments_with_id.dta", clear
+*use "C:\Users\Evan\Dropbox\BD Taxation\Code\analysis\Code\es_explore\payments_with_id.dta", clear
+use "X:\BD Taxation\Code\analysis\Code\es_explore\payments_with_id.dta", clear
+
 split delivery_date, p("/")
 destring delivery_date*, replace
 

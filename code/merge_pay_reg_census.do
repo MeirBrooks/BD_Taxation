@@ -14,6 +14,7 @@ local latest_date "20140319"
 ********************************************************************************
 // Prepare data from payments without bins matched directly to firms so we can add to timeseries
 
+* COMMENT OUT FOR LATEST PROCESSING SINCE THE PERIODS WILL BE OFF (DEREK WOLFSON)
 
 	// start by preparing the latest data from the software
 	use "`PAYDATA'\No BIN\latest_missing_bin.dta", clear
@@ -36,8 +37,6 @@ local latest_date "20140319"
 	keep id computerno entry_id yearperiod VATContribution source num_payments*
 	tempfile latest_nobin
 	save `latest_nobin'
-	
-	
 	
 	insheet using "`PAYDATA'\No BIN\missing bin combined 2 matched checked 2.csv", delim(",") names clear
 	drop _merge
@@ -72,9 +71,9 @@ local latest_date "20140319"
 	*Now, format payments for merge in to final payment and reg dataset
 	rename VATContribution pVATContribution
 	
-	save "C:\Users\Evan\Dropbox\BD Taxation Core Data\Payment and Registration\Payment\pre_collapse.dta", replace 
+	save "X:\BD Taxation Core Data\Payment and Registration\Payment\pre_collapse.dta", replace 
 	
-	use "C:\Users\Evan\Dropbox\BD Taxation Core Data\Payment and Registration\Payment\pre_collapse.dta", clear
+	use "X:\BD Taxation Core Data\Payment and Registration\Payment\pre_collapse.dta", clear
 	
 	collapse (sum) pVATContribution num_payments_all num_payments_pos, by(id yearperiod)
 	reshape wide pVATContribution num_payments_all num_payments_pos ,i(id) j(yearperiod) string
@@ -84,6 +83,8 @@ local latest_date "20140319"
 	sort id
 	tempfile VATContributionNOBIN
 	save `VATContributionNOBIN'
+	
+	
 		
 ********************************************************************************
 // match ids to payments 
@@ -127,13 +128,12 @@ foreach var of varlist pVAT* num_payments*{
 	}
 drop num_outlets 
 
-
+// COMMENTED OUT FOR LATEST BUILD
 // Check time series of total payments and fraction payments missing id's.
 append using `VATContributionNOBIN', gen(nobin)
 replace no_identification =0 if nobin==0
 drop if no_identification==1
 drop no_identification 
-
 
 
 
@@ -153,7 +153,7 @@ save "`PAYDATA'\total_check.dta", replace
 /// Now on with the data prep. 
 
 
-use "C:\Users\Evan\Dropbox\BD Taxation Core Data\Payment and Registration\Payment\total_check.dta", clear 
+use "X:\BD Taxation Core Data\Payment and Registration\Payment\total_check.dta", clear 
 
 // combine payments and adjust zero return
 foreach var of varlist pVAT* num_payments*{
