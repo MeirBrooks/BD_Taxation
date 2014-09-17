@@ -172,6 +172,9 @@ gen mnth_entry = month(entrydate2)
 gen year_entry = year(entrydate2)
 makePeriod mnth_entry day_entry, output(period_entry) yearin(year_entry) // DCW: USES ENTRY DATE AS PERIOD (USES YYCHAL AS YEAR FOR NOW TO KEEP OTHER CODE FROM BRAEKING)
 
+//ALSO DO THIS BY ATTEST DATE (DCW)
+
+
 //If you want to do this by day
 makeDay mmchal daychal, output(day_period) yearin(yychal) 
 
