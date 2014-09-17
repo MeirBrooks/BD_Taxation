@@ -3,7 +3,7 @@ PROJECT: BD-TAXATION
 ANALYSIS BY ENTRY DATE
 */
 
-pause on
+pause off
 
 **FIRST LOAD ANALYSIS_V3 TO GRAB COMPLIANCE INDICATORS USED IN THE PREVOIUS CHALLAN DATE BASED ANALYSIS
 use "X:\BD Taxation Core Data\Merged Data\for_analysis_v3.dta", clear
@@ -33,9 +33,9 @@ bys clusid: egen mean_paid_2013_prior = mean(paid_2013_prior)
 bys clusid: egen mean_paid_prior = mean(paid_prior) 
 
 **RAJ DEFINED AS .20 -- JUST USE THIS TO COMPARE FOR NOW**
-gen HIGHCOMPLIANCE = mean_paid_2012>.15
+gen HIGHCOMPLIANCE = mean_paid_2012>.2
 
-keep id mean_paid* HIGHCOMPLIANCE pVATContribution2012* pVATContribution2013* num_payments_*2012* num_payments_*2013*
+keep id mean_paid* HIGHCOMPLIANCE pVATContribution2012* pVATContribution2013* num_payments_*2012* num_payments_*2013* paid_2012
 
 tempfile COMPLIANCERATES 
 save `COMPLIANCERATES'
@@ -92,7 +92,7 @@ gen YEAR_MONTH = date(`TEMP2',"MY",2014)
 format YEAR_MONTH %tdMon-CCYY
 
 **COLLAPSE TO MONTHLY OBSERVATIONS**
-collapse 	(mean) clusid treat circle letter_delivered reason_no_delivery mean_paid_2012 mean_paid_2013_prior mean_paid_prior HIGHCOMPLIANCE ///
+collapse 	(mean) clusid treat circle letter_delivered reason_no_delivery mean_paid_2012 mean_paid_2013_prior mean_paid_prior paid_2012 HIGHCOMPLIANCE ///
 			(sum) ePVATContribution pVATContribution, by(id YEAR_MONTH)
 			
 **CREATE Y/M VARIABLES*			
@@ -116,13 +116,43 @@ g treat_peers = treat==3|treat==4|treat==7|treat==8
 **CREATE X-AXIS VARIABLE FOR YEARMONTH**
 egen ex_per = group(year month)
 
+local GPHEXP "X:\BD Taxation\Code\analysis\Code\dw_explore\Payments_by_dates"
+
 **CREATE CHALLAN DATE BINSCATTER**
 binscatter vat_amt_trim ex_per ///
 			if letter_delivered==1&HIGHCOMPLIANCE==1, ///
 			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
-
+			
+			graph export "`GPHEXP'/Challan_Date_HICOMP.png", replace
+			
+binscatter vat_amt_trim ex_per ///
+			if letter_delivered==1&HIGHCOMPLIANCE==1&paid_2012==0, ///
+			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			
+			graph export "`GPHEXP'/Challan_Date_HICOMP_NOPAY.png", replace
+			
+binscatter vat_amt_trim ex_per ///
+			if letter_delivered==1&HIGHCOMPLIANCE==0, ///
+			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			
+			graph export "`GPHEXP'/Challan_Date_LOCOMP.png", replace
+					
+			
 **CREATE ENTRY DATE BINSCATTER**
 binscatter e_amt_trim ex_per ///
 			if letter_delivered==1&HIGHCOMPLIANCE==1, ///
 			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			
+			graph export "`GPHEXP'/Entry_Date_HICOMP.png", replace
+			
+binscatter e_amt_trim ex_per ///
+			if letter_delivered==1&HIGHCOMPLIANCE==1&paid_2012==0, ///
+			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			
+			graph export "`GPHEXP'/Entry_Date_HICOMP_NOPAY.png", replace			
+			
+binscatter e_amt_trim ex_per ///
+			if letter_delivered==1&HIGHCOMPLIANCE==0, ///
+			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
 
+			graph export "`GPHEXP'/Entry_Date_LOCOMP.png", replace
