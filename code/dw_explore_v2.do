@@ -1,9 +1,30 @@
+
 /*
 PROJECT: BD-TAXATION
 ANALYSIS BY ENTRY DATE
 */
-
+set more off
 pause off
+
+
+**GRAPH EXPORT LOCAL**
+local GPHEXP "X:\BD Taxation\Code\analysis\Code\dw_explore\Payments_by_dates"
+local GPHTYPE ENTRY
+
+**SET LOCAL FOR MONTHLY OR PERIOD BASED ANALYSIS**
+local PERIOD 0
+
+if `PERIOD' == 1 {
+local GPHNAME PERIOD
+local L1 = 12
+local L2 = 36
+}
+
+if `PERIOD' == 0 {
+local GPHNAME MONTHLY
+local L1 = 6 
+local L2 = 18
+}
 
 **FIRST LOAD ANALYSIS_V3 TO GRAB COMPLIANCE INDICATORS USED IN THE PREVOIUS CHALLAN DATE BASED ANALYSIS
 use "X:\BD Taxation Core Data\Merged Data\for_analysis_v3.dta", clear
@@ -92,13 +113,15 @@ gen YEAR_MONTH = date(`TEMP2',"MY",2014)
 format YEAR_MONTH %tdMon-CCYY
 
 **COLLAPSE TO MONTHLY OBSERVATIONS**
-collapse 	(mean) clusid treat circle letter_delivered reason_no_delivery mean_paid_2012 mean_paid_2013_prior mean_paid_prior paid_2012 HIGHCOMPLIANCE ///
-			(sum) ePVATContribution pVATContribution, by(id YEAR_MONTH)
+if `PERIOD' == 0{
+	collapse 	(mean) clusid treat circle letter_delivered reason_no_delivery mean_paid_2012 mean_paid_2013_prior mean_paid_prior paid_2012 HIGHCOMPLIANCE ///
+				(sum) ePVATContribution pVATContribution, by(id YEAR_MONTH)
+				
+	**CREATE Y/M VARIABLES*			
+	gen year = year(YEAR_MONTH)
+	gen month = month(YEAR_MONTH)
+}
 			
-**CREATE Y/M VARIABLES*			
-gen year = year(YEAR_MONTH)
-gen month = month(YEAR_MONTH)
-
 **GENERATE TREATMENT PRE/POST INDICATORS*
 g treat_mth = year==2013&month==7
 g post_treat = year==2013&month>=7
@@ -114,45 +137,58 @@ g e_amt_trim = min(evat_amt,30000)
 g treat_peers = treat==3|treat==4|treat==7|treat==8
 
 **CREATE X-AXIS VARIABLE FOR YEARMONTH**
-egen ex_per = group(year month)
+if `PERIOD' == 0{
+  egen ex_per = group(year month)
+}
+if `PERIOD' == 1{
+  egen ex_per = group(period)
+}
 
-local GPHEXP "X:\BD Taxation\Code\analysis\Code\dw_explore\Payments_by_dates"
 
-**CREATE CHALLAN DATE BINSCATTER**
+**CREATE CHALLAN DATE BINSCATTER** (NOW I AM DOING THIS BY PERIOD)
 binscatter vat_amt_trim ex_per ///
 			if letter_delivered==1&HIGHCOMPLIANCE==1, ///
-			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			line(connect) xline(`L1' `L2') by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
 			
-			graph export "`GPHEXP'/Challan_Date_HICOMP.png", replace
+			graph export "`GPHEXP'/`GPHNAME'_CHALLAN_DATE_HICOMP.png", replace
 			
 binscatter vat_amt_trim ex_per ///
 			if letter_delivered==1&HIGHCOMPLIANCE==1&paid_2012==0, ///
-			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			line(connect) xline(`L1' `L2') by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
 			
-			graph export "`GPHEXP'/Challan_Date_HICOMP_NOPAY.png", replace
+			graph export "`GPHEXP'/`GPHNAME'_CHALLAN_DATE_HICOMP_NOPAY.png", replace
 			
 binscatter vat_amt_trim ex_per ///
 			if letter_delivered==1&HIGHCOMPLIANCE==0, ///
-			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			line(connect) xline(`L1' `L2') by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
 			
-			graph export "`GPHEXP'/Challan_Date_LOCOMP.png", replace
-					
+			graph export "`GPHEXP'/`GPHNAME'_CHALLAN_DATE_LOCOMP.png", replace
+						
 			
 **CREATE ENTRY DATE BINSCATTER**
 binscatter e_amt_trim ex_per ///
 			if letter_delivered==1&HIGHCOMPLIANCE==1, ///
-			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			line(connect) xline(`L1' `L2') by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
 			
-			graph export "`GPHEXP'/Entry_Date_HICOMP.png", replace
+			graph export "`GPHEXP'/`GPHNAME'_`GPHTYPE'_DATE_HICOMP.png", replace
 			
 binscatter e_amt_trim ex_per ///
 			if letter_delivered==1&HIGHCOMPLIANCE==1&paid_2012==0, ///
-			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			line(connect) xline(`L1' `L2') by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
 			
-			graph export "`GPHEXP'/Entry_Date_HICOMP_NOPAY.png", replace			
+			graph export "`GPHEXP'/`GPHNAME'_`GPHTYPE'_DATE_HICOMP_NOPAY.png", replace			
 			
 binscatter e_amt_trim ex_per ///
 			if letter_delivered==1&HIGHCOMPLIANCE==0, ///
-			line(connect) xline(6 18) by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
+			line(connect) xline(`L1' `L2') by(treat_peers) discrete absorb(circle) ylabel(0(500)2500)
 
-			graph export "`GPHEXP'/Entry_Date_LOCOMP.png", replace
+			graph export "`GPHEXP'/`GPHNAME'_`GPHTYPE'_DATE_LOCOMP.png", replace
+			
+
+			
+			
+/* NOTES 
+1 - Move back to YEAR-MONTH so that you can save for GITHUB 
+2 - Try with untrimmed tax data
+3 - Try with other than Order Date (i.e. attest/entry) 
+*/
