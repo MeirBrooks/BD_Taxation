@@ -35,3 +35,6 @@ forv year = 2012/2013{
 
 egen BNUMPAYMENT_TOTAL = rowtotal(`B2')
 egen ENUMPAYMENT_TOTAL = rowtotal(`E2')
+
+
+HI THIS IS NEW CODE!
