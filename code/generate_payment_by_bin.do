@@ -138,12 +138,12 @@ replace yy = 2010 if yy == 201
 
 replace yychal = 2012 if yychal == 12 | yychal == 20 | yychal == 1012 | yychal == 212 | yychal == 201 | yychal == 202 | yychal == 21012 | yychal == 21022 | yychal == 2021 | yychal == 2102
 replace yychal = 2011 if yychal == 20111
-replace yychal = 2013 if yychal == 2018 | yychal==2013 | yychal==13 | yychal==203 |  yychal==213
+replace yychal = 2013 if yychal == 2018 | yychal==2013 | yychal==13 | yychal==203 |  yychal==213 | yychal == 2031 | yychal == 22013 | yychal==2023
 replace yychal = 2010 if yychal == 2710
-replace yychal = 2013 if yychal == 2023
-drop if yychal > 2013
 
-assert yychal == 2008 | yychal == 2009 | yychal == 2010 | yychal == 2011 | yychal == 2012 | yychal == 2013 | yychal == .
+drop if yychal > 2014
+
+assert yychal == 2008 | yychal == 2009 | yychal == 2010 | yychal == 2011 | yychal == 2012 | yychal == 2013 | yychal == 2014 |yychal == . 
 
 replace yychal = yy if yychal == .
 
@@ -173,7 +173,16 @@ gen year_entry = year(entrydate2)
 makePeriod mnth_entry day_entry, output(period_entry) yearin(year_entry) // DCW: USES ENTRY DATE AS PERIOD (USES YYCHAL AS YEAR FOR NOW TO KEEP OTHER CODE FROM BRAEKING)
 
 //ALSO DO THIS BY ATTEST DATE (DCW)
+makePeriod attestmonth1 attestday1, output(period_attest) yearin(attestyear1)
 
+//ALSO DO BY ORDER DATE 
+gen orderdate2 = date(orderdate,"DMY",2014) // generate date variable from string
+format orderdate2 %td
+
+gen day_order  = day(orderdate2)
+gen mnth_order = month(orderdate2)
+gen year_order = year(orderdate2)
+makePeriod mnth_entry day_entry, output(period_order) yearin(year_order) // DCW: USES ENTRY DATE AS PERIOD (USES YYCHAL AS YEAR FOR NOW TO KEEP OTHER CODE FROM BRAEKING)
 
 //If you want to do this by day
 makeDay mmchal daychal, output(day_period) yearin(yychal) 
@@ -300,9 +309,9 @@ replace entry_month = month_replace if regexm(entry,"/")
 replace VATContribution=0 if missing(VATContribution)
 
 *SET LOCAL TO DO PAYMENT DATE OR ENTRY DATE*
-local P1 period_entry //SET PERIOD VARIABLE (Payment date = period*, Entry date = period_entry)
-local P2 year_entry_p //SET PERIOD YEAR VARIABLE (Payment date = yychal_p*, Entry date = year_entry_p)
-**HOW ORIGINAL ANALYSIS IS DONE
+local P1 period_entry //SET PERIOD VARIABLE (Payment date = period*, Entry date = period_entry, Attest date = period_attest)
+local P2 year_entry_p  //SET PERIOD YEAR VARIABLE (Payment date = yychal_p*, Entry date = year_entry_p, Attest date = attestyear1_p ) 
+**NOTE: ORIGINAL ANALYSIS DONE WITH CHALLAN DATE (i.e. P1 = period* P2 = yychal_p*)
 
 // turn everything into periods/quarters
 by bin `P1' `P2', sort : egen pVATContribution = sum(VATContribution) // analysis by payment date
