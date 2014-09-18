@@ -309,8 +309,8 @@ replace entry_month = month_replace if regexm(entry,"/")
 replace VATContribution=0 if missing(VATContribution)
 
 *SET LOCAL TO DO PAYMENT DATE OR ENTRY DATE*
-local P1 period_entry //SET PERIOD VARIABLE (Payment date = period*, Entry date = period_entry, Attest date = period_attest)
-local P2 year_entry_p  //SET PERIOD YEAR VARIABLE (Payment date = yychal_p*, Entry date = year_entry_p, Attest date = attestyear1_p ) 
+local P1 period_attest //SET PERIOD VARIABLE (Payment date = period*, Entry date = period_entry, Attest date = period_attest)
+local P2 attestyear1_p  //SET PERIOD YEAR VARIABLE (Payment date = yychal_p*, Entry date = year_entry_p, Attest date = attestyear1_p ) 
 **NOTE: ORIGINAL ANALYSIS DONE WITH CHALLAN DATE (i.e. P1 = period* P2 = yychal_p*)
 
 // turn everything into periods/quarters
