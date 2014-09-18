@@ -9,10 +9,10 @@ pause off
 
 **GRAPH EXPORT LOCAL**
 local GPHEXP "X:\BD Taxation\Code\analysis\Code\dw_explore\Payments_by_dates"
-local GPHTYPE ENTRY
+local GPHTYPE ATTEST
 
 **SET LOCAL FOR MONTHLY OR PERIOD BASED ANALYSIS**
-local PERIOD 0
+local PERIOD 1
 
 if `PERIOD' == 1 {
 local GPHNAME PERIOD
@@ -27,7 +27,7 @@ local L2 = 18
 }
 
 **FIRST LOAD ANALYSIS_V3 TO GRAB COMPLIANCE INDICATORS USED IN THE PREVOIUS CHALLAN DATE BASED ANALYSIS
-use "X:\BD Taxation Core Data\Merged Data\for_analysis_v3.dta", clear
+	
 
 replace letter_delivered = 0 if mi(letter_delivered) // code from ES and RC -- not sure why we are doig this
 
