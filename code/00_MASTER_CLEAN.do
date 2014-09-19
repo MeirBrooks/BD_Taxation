@@ -1,6 +1,6 @@
 do "S:\bd-tax"
 
-local createdata = 1
+local createdata = 0
 
 **CREATE LOOP FOR EACH TYPE OF DATE**
 foreach DATETYPE in CHALLAN ATTEST ENTRY{
@@ -14,7 +14,7 @@ if "`DATETYPE'"=="ATTEST"{
 	local P1 		period_attest 
 	local P2 		attestyear1_p
 }
-if "`DATETYPE'"=="`ENTRY'"{
+if "`DATETYPE'"=="ENTRY"{
 	local P1 		period_entry 
 	local P2 		year_entry_p
 }
@@ -53,7 +53,8 @@ foreach DATETYPE in CHALLAN ATTEST ENTRY{
 merge 1:1 id using ``DATETYPE'', nogen
 }
 
-include "Y:\BD_Taxation\code\01_process_data_for_analysis"
+//INCLUDE FURTHER DATA CLEANING
+include "Y:\BD_Taxation\code\01_process_data_for_analysis.do"
 
 save "X:\BD Taxation Core Data\Merged Data\for_analysis_v4.dta", replace
 
