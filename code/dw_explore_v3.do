@@ -194,7 +194,7 @@ foreach type in C A E{
 				
 }
 
-local TITLE "[High Compliance Non-Payers] Payment Indicators Based on"
+local TITLE "[High Compliance, Non-Payers] Payment Indicators Based on"
 
 	tex3pt "`OUT'/Raw/REG14C" using "`OUT'/LondonAnalysis.tex", ///
                         land ///
