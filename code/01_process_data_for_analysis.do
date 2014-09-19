@@ -131,7 +131,8 @@ bys clusid: egen mean_paid_2012 = mean(C_paid_2012)
 gen HICOMP =  mean_paid_2012>.15
 	la var HICOMP "High Compliance 0/1 (Based on Challan)"
 	
-
+**RANDOM LABELING
+la var treat_peer "Peer Info"
 
 save "X:\BD Taxation Core Data\Merged Data\for_analysis_v4.dta", replace
 
