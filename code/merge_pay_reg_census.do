@@ -223,7 +223,7 @@ saveold "`MERGEDATA'/CleanMerged`latest_date'.dta", replace
 
 use "`CCT'\reconciled_delivery_data.dta", clear
 
-keep id letter_delivered reason_no_delivery
+keep id letter_delivered reason_no_delivery delivery_date
 
 tempfile letter
 save `letter'
