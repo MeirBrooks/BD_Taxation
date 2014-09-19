@@ -1,6 +1,6 @@
 do "S:\bd-tax"
 
-local createdata = 0 
+local createdata = 1
 
 **CREATE LOOP FOR EACH TYPE OF DATE**
 foreach DATETYPE in CHALLAN ATTEST ENTRY{
@@ -19,10 +19,10 @@ if "`DATETYPE'"=="`ENTRY'"{
 	local P2 		year_entry_p
 }
 if `createdata' == 1{
-include "Y:\BD_Taxation\code\generate_payment_by_bin" // uses `P1' and `P2'
-do "Y:\BD_Taxation\code\generate_registration_file"
-do "Y:\BD_Taxation\code\merge_id_to_uncollapsed_payments"
-include "Y:\BD_Taxation\code\merge_pay_reg_census"
+include "Y:\BD_Taxation\code\01_generate_payment_by_bin" // uses `P1' and `P2'
+do "Y:\BD_Taxation\code\01_generate_registration_file"
+do "Y:\BD_Taxation\code\01_merge_id_to_uncollapsed_payments"
+include "Y:\BD_Taxation\code\01_merge_pay_reg_census"
 } //end createdata
 
 
@@ -53,16 +53,7 @@ foreach DATETYPE in CHALLAN ATTEST ENTRY{
 merge 1:1 id using ``DATETYPE'', nogen
 }
 
-order id clusid circle treat delivery_date letter_delivered reason_no_delivery
-la var id "Firm ID"
-la var clusid "Cluster ID"
-la var circle "Circle Name"
-la var treat "Treatment Assignment"
-la var delivery_date "Delivery Date"
-la var letter_delivered "0/1 Letter Delivered"
-la var reason_no_delivery "No Letter Delivery"
-
-
+include "Y:\BD_Taxation\code\01_process_data_for_analysis"
 
 save "X:\BD Taxation Core Data\Merged Data\for_analysis_v4.dta", replace
 
