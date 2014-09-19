@@ -191,7 +191,6 @@ makeDay mmchal daychal, output(day_period) yearin(yychal)
 *gen dd =1
 *makePeriod mm dd, output(period) yearin(yy)
 
- 
 
 //This is just to check the dates 
 *save "`PAYDATA'/Latest Software Output/`date'check.dta", replace 
@@ -307,11 +306,6 @@ replace entry_month = month_replace if regexm(entry,"/")
 //saveold "`PAYDATA'\all_payments_pre_bin_collapse.dta", replace 
 *********************************************************************************
 replace VATContribution=0 if missing(VATContribution)
-
-*SET LOCAL TO DO PAYMENT DATE OR ENTRY DATE*
-local P1 period_attest //SET PERIOD VARIABLE (Payment date = period*, Entry date = period_entry, Attest date = period_attest)
-local P2 attestyear1_p  //SET PERIOD YEAR VARIABLE (Payment date = yychal_p*, Entry date = year_entry_p, Attest date = attestyear1_p ) 
-**NOTE: ORIGINAL ANALYSIS DONE WITH CHALLAN DATE (i.e. P1 = period* P2 = yychal_p*)
 
 // turn everything into periods/quarters
 by bin `P1' `P2', sort : egen pVATContribution = sum(VATContribution) // analysis by payment date

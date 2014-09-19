@@ -219,7 +219,8 @@ drop _merge
 merge m:1 clusid using "`CCT'\TreatmentAssignment.dta"
 drop _merge
 
-saveold "`MERGEDATA'/CleanMerged`latest_date'.dta", replace
+tempfile MERGED1
+saveold `MERGED1'
 
 use "`CCT'\reconciled_delivery_data.dta", clear
 
@@ -228,8 +229,8 @@ keep id letter_delivered reason_no_delivery delivery_date
 tempfile letter
 save `letter'
 
-use "`MERGEDATA'/CleanMerged`latest_date'", clear
+use `MERGED1'
 
 merge id using `letter', sort 
 
-saveold "`MERGEDATA'/CleanMerged`latest_date'.dta", replace
+saveold "`MERGEDATA'/CleanMerged_`DATETYPE'_`latest_date'.dta", replace
