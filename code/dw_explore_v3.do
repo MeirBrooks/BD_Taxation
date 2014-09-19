@@ -120,6 +120,7 @@ local TITLE "[High Compliance] Payment Indicators Based on"
                         star(ols) ///
                         note("`NOTE'")
 
+
 **1.3 VAT PAYMENT + HIGH COMPLIANCE + NONPAYER**
 eststo clear
 foreach type in C A E{
@@ -137,7 +138,8 @@ foreach type in C A E{
 				 fmt(3 3 0) ///
 				 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
 				 labels("Ctrl. Mean" "R-Sq" "Observations") ///
-				) // end stats				
+				) // end stats		
+				
 }
 
 local TITLE "[High Compliance, Non-Payers] Payment Amounts Based on"
@@ -165,6 +167,11 @@ local TITLE "[High Compliance, Non-Payers] Payment Amounts Based on"
                         tlabel("tab2") ///
                         star(ols) ///
                         note("`NOTE'")
+
+
+
+
+
 
 **1.4 VAT PAYMENT INDICATOR + HIGH COMPLIANCE + NONPAYER**
 eststo clear
