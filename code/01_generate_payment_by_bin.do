@@ -160,6 +160,13 @@ replace yychal = yychal - 1 if yychal == real(substr("`UpdateDate'",1,4)) & mmch
 *replace mmchal = mm if !missing(mm) 
 
 //makeQuarter2 mmchal daychal, output(quarter) yearin(yychal)
+
+//CHALLAN DATE
+tempvar TEMP
+gen `TEMP' = string(daychal)+"/"+string(mmchal)+"/"+string(yychal)
+gen challandate2 = date(`TEMP', "DMY",2014)
+format challandate2 %td
+
 makePeriod mmchal daychal, output(period) yearin(yychal) // DCW: FROM ES USES CHALLAN DATE (WHAT IS USED FOR ANALYSIS AS OF 9/15/2014
 
 
@@ -173,6 +180,11 @@ gen year_entry = year(entrydate2)
 makePeriod mnth_entry day_entry, output(period_entry) yearin(year_entry) // DCW: USES ENTRY DATE AS PERIOD (USES YYCHAL AS YEAR FOR NOW TO KEEP OTHER CODE FROM BRAEKING)
 
 //ALSO DO THIS BY ATTEST DATE (DCW)
+tempvar TEMP
+gen `TEMP' = string(attestday1)+"/"+string(attestmonth1)+"/"+string(attestyear1)
+gen attestday3 = date(`TEMP', "DMY",2014)
+format attestday3 %td
+
 makePeriod attestmonth1 attestday1, output(period_attest) yearin(attestyear1)
 
 //ALSO DO BY ORDER DATE 
