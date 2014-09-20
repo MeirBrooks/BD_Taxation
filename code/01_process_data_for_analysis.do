@@ -111,13 +111,13 @@ if `i'==4{
 *P1*
 gen		`PT'_VAT_post`i'_trim = 	min(`PT'_VAT_post`i', 10000)
 gen		`PT'_VAT_post`i'_trim_sq = 	`PT'_VAT_post`i'_trim^2
-la var 	`PT'_VAT_post`i'_trim 		"`POST' (Trimmed)"
-la var 	`PT'_VAT_post`i'_trim_sq 	"`POST' Sq (Trimmed)"
+la var 	`PT'_VAT_post`i'_trim 		"`POST'"
+la var 	`PT'_VAT_post`i'_trim_sq 	"`POST' Sq"
 
 gen 	`PT'_VAT_prior`i'_trim = 	min(`PT'_VAT_prior1,10000)
 gen 	`PT'_VAT_prior`i'_trim_sq = `PT'_VAT_prior`i'_trim^2
-la var 	`PT'_VAT_prior`i'_trim 		"`PRE' (Trimmed)"
-la var 	`PT'_VAT_prior`i'_trim_sq 	"`PRE' Sq (Trimmed)"
+la var 	`PT'_VAT_prior`i'_trim 		"`PRE'"
+la var 	`PT'_VAT_prior`i'_trim_sq 	"`PRE' Sq"
 
 } //end 
 
