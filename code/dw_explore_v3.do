@@ -26,230 +26,188 @@ local NOTE "Cluster robust standard errors in parentheses (firm cluster level). 
 
 **BEGIN REGRESSIONS*
 
-local PAYMENT_CTRLS "C_VAT_prior\`i' C_VAT_prior\`i'_trim_sq"
+local PAYMENT_CTRLS "C_VAT_prior\`i'_trim C_VAT_prior\`i'_trim_sq"
 local KEEP_COLUMNS "REG\`COMPNO'\`INCLUDE_ZEROS'\`type'1 REG\`COMPNO'\`INCLUDE_ZEROS'\`type'4"
 
 **SECTION 1 -- HIGH/LOW COMPLIANCE + PAYMENT AMOUNT/INDICATORS + ZEROS/NON-ZEROS**
-foreach INCLUDE_ZEROS in 1 0{
-
-if "`INCLUDE_ZEROS'"=="0"{
-local ZEROS "& \`type'_VAT_post\`i'!=0"
-local ZERONOTE ", Excluding Period Non-Payers"
-}
-if "`INCLUDE_ZEROS'"=="1"{
-local ZEROS ""
-local ZERONOTE ""
-}
-
-foreach COMP in High Low{
-if "`COMP'"=="High" {
-local COMPNO = 1
-}
-if "`COMP'"=="Low" {
-local COMPNO = 0
-}
-
-**1.1 VAT PAYMENT + HIGH/LOW COMPLIANCE**
-eststo clear
 foreach type in C A E{
-if "`type'"=="C"{
-local DATE "Challan Date"
-}
-
-if "`type'"=="A"{
-local DATE "Attest Date"
-}
-
-if "`type'"=="E"{
-local DATE "Entry Date"
-}
-
-	forvalues i=1/4{
-		qui reg `type'_VAT_post`i'_trim treat_peer C_paid_2012 `PAYMENT_CTRLS' if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS', vce(cluster clusid)
-		qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
-		qui sum `e(depvar)' if e(sample) & treat_peer==0
-		qui estadd scalar CTRLMEAN = r(mean)
+	if "`type'"=="C"{
+	local DATE "Challan Date"
+	local DATE2 "Challan"
 	}
-		esttab `KEEP_COLUMNS'  using "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'", /// 
-				replace fragment booktabs ///
-				label b(3) se(3) se ///
-				star(* .1 ** .05 *** .01) ///
-				stats(CTRLMEAN r2 N, ///
-				 fmt(3 3 0) ///
-				 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
-				 labels("Ctrl. Mean" "R-Sq" "Observations") ///
-				) // end stats		
-				
+
+	if "`type'"=="A"{
+	local DATE "Attest Date"
+	local DATE2 "Attest"
+	}
+
+	if "`type'"=="E"{
+	local DATE "Entry Date"
+	local DATE2 "Entry"
+	}
 
 
-local TITLE  "Payment Amounts Based on"
-local SAMPLE "[`COMP' Compliance`ZERONOTE']"
+	foreach INCLUDE_ZEROS in 1 0{
+		if "`INCLUDE_ZEROS'"=="0"{
+		local ZEROS "& \`type'_VAT_post\`i'!=0"
+		local ZERONOTE ", Excluding Analysis Period Non-Payers"
+		}
+		if "`INCLUDE_ZEROS'"=="1"{
+		local ZEROS ""
+		local ZERONOTE ""
+		}
 
-if "`COMP'"=="High" & "`INCLUDE_ZEROS'"=="1" & "`type'"=="C" {
-	tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
-                        `START' land ///
-                        clearpage cwidth(`CWIDTH') ///
-                        title("`TITLE' `DATE' `SAMPLE'") ///
-                        tlabel("tab1") ///
-                        star(ols) ///
-						note("`NOTE'")
-}
-else {
-	tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(`CWIDTH') ///
-                        title("`TITLE' `DATE' `SAMPLE'") ///
-                        tlabel("tab1") ///
-                        star(ols) ///
-						note("`NOTE'")
-}
-}
+		foreach COMP in High Low{
+			if "`COMP'"=="High" {
+			local COMPNO = 1
+			}
+			if "`COMP'"=="Low" {
+			local COMPNO = 0
+			}
+
+			**1.1 VAT PAYMENT + HIGH/LOW COMPLIANCE**
+			eststo clear
+			forvalues i=1/4{
+				qui reg `type'_VAT_post`i'_trim treat_peer C_paid_2012 `PAYMENT_CTRLS' if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS', vce(cluster clusid)
+				qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
+				qui sum `e(depvar)' if e(sample) & treat_peer==0
+				qui estadd scalar CTRLMEAN = r(mean)
+			}
+				esttab `KEEP_COLUMNS'  using "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'", /// 
+						replace fragment booktabs ///
+						label b(3) se(3) se ///
+						star(* .1 ** .05 *** .01) ///
+						stats(CTRLMEAN r2 N, ///
+						 fmt(3 3 0) ///
+						 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
+						 labels("Ctrl. Mean" "R-Sq" "Observations") ///
+						) // end stats		
 						
 
-**1.2 VAT PAYMENT + HIGH/LOW COMPLIANCE + NONPAYER**
-eststo clear
-foreach type in C A E{
-if "`type'"=="C"{
-local DATE "Challan Date"
-}
 
-if "`type'"=="A"{
-local DATE "Attest Date"
-}
+			local TITLE  "Payment Amounts Based on"
+			local SAMPLE "[`COMP' Compliance`ZERONOTE']"
 
-if "`type'"=="E"{
-local DATE "Entry Date"
-}
-	forvalues i=1/4{
-		qui reg `type'_VAT_post`i'_trim treat_peer `PAYMENT_CONTROLS' if letter_delivered==1 & HICOMP==`COMPNO' & C_paid_2012==0 `ZEROS', vce(cluster clusid)
-		qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
-		qui sum `e(depvar)' if e(sample) & treat_peer==0
-		qui estadd scalar CTRLMEAN = r(mean)
-	}
-		esttab `KEEP_COLUMNS' using "`OUT'/Raw/REG12`type'`COMP'`INCLUDE_ZEROS'", /// 
-				replace fragment booktabs ///
-				label b(3) se(3) se ///
-				star(* .1 ** .05 *** .01) ///
-				stats(CTRLMEAN r2 N, ///
-				 fmt(3 3 0) ///
-				 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
-				 labels("Ctrl. Mean" "R-Sq" "Observations") ///
-				) // end stats		
-				
+			if "`COMP'"=="High" & "`INCLUDE_ZEROS'"=="1"{
+				tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
+									`START' land ///
+									clearpage cwidth(`CWIDTH') ///
+									title("`TITLE' `DATE' `SAMPLE'") ///
+									tlabel("tab1") ///
+									star(ols) ///
+									note("`NOTE'")
+			}
+			else {
+				tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
+									land ///
+									clearpage cwidth(`CWIDTH') ///
+									title("`TITLE' `DATE' `SAMPLE'") ///
+									tlabel("tab1") ///
+									star(ols) ///
+									note("`NOTE'")
+			}
 
 
-local TITLE_START 	"Payment Amounts Based on"
-local SAMPLE		"[`COMP' Compliance, Non-Payers`ZERONOTE']"
-
-	tex3pt "`OUT'/Raw/REG12`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(`CWIDTH') ///
-                        title("`TITLE' `DATE' `SAMPLE'") ///
-                        tlabel("tab1") ///
-                        star(ols) ///
-						note("`NOTE'")
-} // end type
-
-**1.3 VAT PAYMENT INDICATOR + HIGH/LOW COMPLIANCE**
-eststo clear
-foreach type in C A E{
-if "`type'"=="C"{
-local DATE "Challan Date"
-}
-
-if "`type'"=="A"{
-local DATE "Attest Date"
-}
-
-if "`type'"=="E"{
-local DATE "Entry Date"
-}
-	forvalues i=1/4{
-		qui reg `type'_paid_post`i' treat_peer C_paid_2012 if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS', vce(cluster clusid)		
-		qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
-		qui sum `e(depvar)' if e(sample) & treat_peer==0
-		qui estadd scalar CTRLMEAN = r(mean)
-	}
-		esttab `KEEP_COLUMNS' using "`OUT'/Raw/REG13`type'`COMP'`INCLUDE_ZEROS'", /// 
-				replace fragment booktabs ///
-				label b(3) se(3) se ///
-				star(* .1 ** .05 *** .01) ///
-				stats(CTRLMEAN r2 N, ///
-				 fmt(3 3 0) ///
-				 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
-				 labels("Ctrl. Mean" "R-Sq" "Observations") ///
-				) // end stats		
-				
+			**1.3 VAT PAYMENT INDICATOR + HIGH/LOW COMPLIANCE**
+				forvalues i=1/4{
+					qui reg `type'_paid_post`i' treat_peer C_paid_2012 if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS', vce(cluster clusid)		
+					qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
+					qui sum `e(depvar)' if e(sample) & treat_peer==0
+					qui estadd scalar CTRLMEAN = r(mean)
+				}
+					esttab `KEEP_COLUMNS' using "`OUT'/Raw/REG13`type'`COMP'`INCLUDE_ZEROS'", /// 
+							replace fragment booktabs ///
+							label b(3) se(3) se ///
+							star(* .1 ** .05 *** .01) ///
+							stats(CTRLMEAN r2 N, ///
+							 fmt(3 3 0) ///
+							 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
+							 labels("Ctrl. Mean" "R-Sq" "Observations") ///
+							) // end stats		
+							
 
 
-local TITLE "Payment Indicators Based on"
-local SAMPLE "[`COMP' Compliance`ZERONOTE']"
+			local TITLE "Payment Indicators Based on"
+			local SAMPLE "[`COMP' Compliance`ZERONOTE']"
 
-	tex3pt "`OUT'/Raw/REG13`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(`CWIDTH') ///
-                        title("`TITLE' `DATE' `SAMPLE'") ///
-                        tlabel("tab1") ///
-                        star(ols) ///
-						note("`NOTE'")
+				tex3pt "`OUT'/Raw/REG13`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
+									land ///
+									clearpage cwidth(`CWIDTH') ///
+									title("`TITLE' `DATE' `SAMPLE'") ///
+									tlabel("tab1") ///
+									star(ols) ///
+									note("`NOTE'")
+									
+			**1.2 VAT PAYMENT + HIGH/LOW COMPLIANCE + NONPAYER**
+				forvalues i=1/4{
+					qui reg `type'_VAT_post`i'_trim treat_peer `PAYMENT_CTRLS' if letter_delivered==1 & HICOMP==`COMPNO' & C_paid_2012==0 `ZEROS', vce(cluster clusid)
+					qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
+					qui sum `e(depvar)' if e(sample) & treat_peer==0
+					qui estadd scalar CTRLMEAN = r(mean)
+				}
+					esttab `KEEP_COLUMNS' using "`OUT'/Raw/REG12`type'`COMP'`INCLUDE_ZEROS'", /// 
+							replace fragment booktabs ///
+							label b(3) se(3) se ///
+							star(* .1 ** .05 *** .01) ///
+							stats(CTRLMEAN r2 N, ///
+							 fmt(3 3 0) ///
+							 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
+							 labels("Ctrl. Mean" "R-Sq" "Observations") ///
+							) // end stats		
+							
 
-} //end type
 
-**1.4 VAT PAYMENT INDICATOR + HIGH/LOW COMPLIANCE + NONPAYER**
-eststo clear
-foreach type in C A E{
-if "`type'"=="C"{
-local DATE "Challan Date"
-}
+			local TITLE		 	"Payment Amounts Based on"
+			local SAMPLE		"[`COMP' Compliance, 2012 Non-Payers`ZERONOTE']"
 
-if "`type'"=="A"{
-local DATE "Attest Date"
-}
+				tex3pt "`OUT'/Raw/REG12`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
+									land ///
+									clearpage cwidth(`CWIDTH') ///
+									title("`TITLE' `DATE' `SAMPLE'") ///
+									tlabel("tab1") ///
+									star(ols) ///
+									note("`NOTE'")
 
-if "`type'"=="E"{
-local DATE "Entry Date"
-}
-	forvalues i=1/4{
-		qui reg `type'_paid_post`i' treat_peer if letter_delivered==1 & HICOMP==`COMPNO' & C_paid_2012==0 `ZEROS', vce(cluster clusid)
-		qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
-		qui sum `e(depvar)' if e(sample) & treat_peer==0
-		qui estadd scalar CTRLMEAN = r(mean)
-	}
-		esttab `KEEP_COLUMNS' using "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'", /// 
-				replace fragment booktabs ///
-				label b(3) se(3) se ///
-				star(* .1 ** .05 *** .01) ///
-				stats(CTRLMEAN r2 N, ///
-				 fmt(3 3 0) ///
-				 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
-				 labels("Ctrl. Mean" "R-Sq" "Observations") ///
-				) // end stats		
-				
+			**1.4 VAT PAYMENT INDICATOR + HIGH/LOW COMPLIANCE + NONPAYER**
+				forvalues i=1/4{
+					qui reg `type'_paid_post`i' treat_peer if letter_delivered==1 & HICOMP==`COMPNO' & C_paid_2012==0 `ZEROS', vce(cluster clusid)
+					qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
+					qui sum `e(depvar)' if e(sample) & treat_peer==0
+					qui estadd scalar CTRLMEAN = r(mean)
+				}
+					esttab `KEEP_COLUMNS' using "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'", /// 
+							replace fragment booktabs ///
+							label b(3) se(3) se ///
+							star(* .1 ** .05 *** .01) ///
+							stats(CTRLMEAN r2 N, ///
+							 fmt(3 3 0) ///
+							 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
+							 labels("Ctrl. Mean" "R-Sq" "Observations") ///
+							) // end stats		
+							
 
-local TITLE  "Payment Indicators Based on"
-local SAMPLE "[`COMP' Compliance, Non-Payers`ZERONOTE']"
+			local TITLE  "Payment Indicators Based on"
+			local SAMPLE "[`COMP' Compliance, 2012 Non-Payers`ZERONOTE']"
 
-				
-if "`COMP'"=="Low" & "`INCLUDE_ZEROS'"=="0" & "`type'"=="E"{						
-	tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
-                        land `END' ///
-                        clearpage cwidth(`CWIDTH') ///
-                        title("`TITLE' Entry Date `SAMPLE'") ///
-                        tlabel("tab2") ///
-                        star(ols) ///
-                        note("`NOTE'")
-}
-else{						
-	tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(`CWIDTH') ///
-                        title("`TITLE' `DATE' `SAMPLE'") ///
-                        tlabel("tab1") ///
-                        star(ols) ///
-						note("`NOTE'")
-}
-
-} //end type						
-						
-} //end COMP
-} //end INCLUDE_ZEROS
+							
+			if "`COMP'"=="Low" & "`INCLUDE_ZEROS'"=="0"{						
+				tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
+									land `END' ///
+									clearpage cwidth(`CWIDTH') ///
+									title("`TITLE' `DATE' `SAMPLE'") ///
+									tlabel("tab2") ///
+									star(ols) ///
+									note("`NOTE'")
+			}
+			else{						
+				tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
+									land ///
+									clearpage cwidth(`CWIDTH') ///
+									title("`TITLE' `DATE' `SAMPLE'") ///
+									tlabel("tab1") ///
+									star(ols) ///
+									note("`NOTE'")
+			}					
+} //end					
+} //end
+} //end
