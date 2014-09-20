@@ -17,24 +17,60 @@ order mean_paid_2012 HICOMP, after(LD_PERIOD)
 local OUT "X:\BD Taxation\Code\analysis\Code\dw_explore\Analysis4London"
 local START preamble(list info) replace
 local END enddoc compile
+local CWIDTH 4cm
 
 **SET GLOBAL ESTTAB SETTINGS*
 local STARS "star(* .1 ** .05 *** .01)"
 local ESTOPT replace label booktabs fragment b(3) se(3) nonotes 
-local NOTE "Standard Errors clustered at cluster level in parentheses. All VAT payment variables top-coded at 10,000 Tk.  Squared VAT payment terms are the squared top-coded variables. High compliance cluster implies $>$15% of firms in a cluster paid VAT in 2012."
+local NOTE "Cluster robust standard errors in parentheses (firm cluster level). All VAT payment variables top-coded at 10,000 Tk.  Squared VAT payment terms are the squared top-coded variables. High compliance cluster implies $>$15% of firms in a cluster paid VAT in 2012."
 
 **BEGIN REGRESSIONS*
 
-**1.1 VAT PAYMENT + HIGH COMPLIANCE**
+local PAYMENT_CTRLS "C_VAT_prior\`i' C_VAT_prior\`i'_trim_sq"
+local KEEP_COLUMNS "REG\`COMPNO'\`INCLUDE_ZEROS'\`type'1 REG\`COMPNO'\`INCLUDE_ZEROS'\`type'4"
+
+**SECTION 1 -- HIGH/LOW COMPLIANCE + PAYMENT AMOUNT/INDICATORS + ZEROS/NON-ZEROS**
+foreach INCLUDE_ZEROS in 1 0{
+
+if "`INCLUDE_ZEROS'"=="0"{
+local ZEROS "& \`type'_VAT_post\`i'!=0"
+local ZERONOTE ", Excluding Period Non-Payers"
+}
+if "`INCLUDE_ZEROS'"=="1"{
+local ZEROS ""
+local ZERONOTE ""
+}
+
+foreach COMP in High Low{
+if "`COMP'"=="High" {
+local COMPNO = 1
+}
+if "`COMP'"=="Low" {
+local COMPNO = 0
+}
+
+**1.1 VAT PAYMENT + HIGH/LOW COMPLIANCE**
 eststo clear
 foreach type in C A E{
+if "`type'"=="C"{
+local DATE "Challan Date"
+}
+
+if "`type'"=="A"{
+local DATE "Attest Date"
+}
+
+if "`type'"=="E"{
+local DATE "Entry Date"
+}
+
 	forvalues i=1/4{
-		qui reg `type'_VAT_post`i'_trim treat_peer C_paid_2012 C_VAT_prior`i'_trim C_VAT_prior`i'_trim_sq if letter_delivered==1 & HICOMP==1, vce(cluster clusid)
-		qui eststo REG`type'`i'
+		qui reg `type'_VAT_post`i'_trim treat_peer C_paid_2012 `PAYMENT_CTRLS' if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS', vce(cluster clusid)
+		qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
 		qui sum `e(depvar)' if e(sample) & treat_peer==0
 		qui estadd scalar CTRLMEAN = r(mean)
 	}
-		esttab REG`type'* using "`OUT'/Raw/REG11`type'", /// 
+		esttab `KEEP_COLUMNS'  using "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'", /// 
 				replace fragment booktabs ///
 				label b(3) se(3) se ///
 				star(* .1 ** .05 *** .01) ///
@@ -44,45 +80,53 @@ foreach type in C A E{
 				 labels("Ctrl. Mean" "R-Sq" "Observations") ///
 				) // end stats		
 				
-}
 
-local TITLE "[High Compliance] Payment Amounts Based on"
 
-	tex3pt "`OUT'/Raw/REG11C" using "`OUT'/LondonAnalysis.tex", ///
+local TITLE  "Payment Amounts Based on"
+local SAMPLE "[`COMP' Compliance`ZERONOTE']"
+
+if "`COMP'"=="High" & "`INCLUDE_ZEROS'"=="1" & "`type'"=="C" {
+	tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
                         `START' land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Challan Date") ///
+                        clearpage cwidth(`CWIDTH') ///
+                        title("`TITLE' `DATE' `SAMPLE'") ///
                         tlabel("tab1") ///
                         star(ols) ///
 						note("`NOTE'")
-						
-	tex3pt "`OUT'/Raw/REG11A" using "`OUT'/LondonAnalysis.tex", ///
+}
+else {
+	tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
                         land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Attest Date") ///
-                        tlabel("tab2") ///
+                        clearpage cwidth(`CWIDTH') ///
+                        title("`TITLE' `DATE' `SAMPLE'") ///
+                        tlabel("tab1") ///
                         star(ols) ///
-                        note("`NOTE'")					
-						
-	tex3pt "`OUT'/Raw/REG11E" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Entry Date") ///
-                        tlabel("tab2") ///
-                        star(ols) ///
-                        note("`NOTE'")
+						note("`NOTE'")
+}
+}
 						
 
-**1.2 VAT PAYMENT INDICATOR + HIGH COMPLIANCE**
+**1.2 VAT PAYMENT + HIGH/LOW COMPLIANCE + NONPAYER**
 eststo clear
 foreach type in C A E{
+if "`type'"=="C"{
+local DATE "Challan Date"
+}
+
+if "`type'"=="A"{
+local DATE "Attest Date"
+}
+
+if "`type'"=="E"{
+local DATE "Entry Date"
+}
 	forvalues i=1/4{
-		qui reg `type'_paid_post`i' treat_peer C_paid_2012  if letter_delivered==1 & HICOMP==1, vce(cluster clusid)		
-		qui eststo REG`type'`i'
+		qui reg `type'_VAT_post`i'_trim treat_peer `PAYMENT_CONTROLS' if letter_delivered==1 & HICOMP==`COMPNO' & C_paid_2012==0 `ZEROS', vce(cluster clusid)
+		qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
 		qui sum `e(depvar)' if e(sample) & treat_peer==0
 		qui estadd scalar CTRLMEAN = r(mean)
 	}
-		esttab REG`type'* using "`OUT'/Raw/REG12`type'", /// 
+		esttab `KEEP_COLUMNS' using "`OUT'/Raw/REG12`type'`COMP'`INCLUDE_ZEROS'", /// 
 				replace fragment booktabs ///
 				label b(3) se(3) se ///
 				star(* .1 ** .05 *** .01) ///
@@ -92,45 +136,41 @@ foreach type in C A E{
 				 labels("Ctrl. Mean" "R-Sq" "Observations") ///
 				) // end stats		
 				
-}
 
-local TITLE "[High Compliance] Payment Indicators Based on"
 
-	tex3pt "`OUT'/Raw/REG12C" using "`OUT'/LondonAnalysis.tex", ///
+local TITLE_START 	"Payment Amounts Based on"
+local SAMPLE		"[`COMP' Compliance, Non-Payers`ZERONOTE']"
+
+	tex3pt "`OUT'/Raw/REG12`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
                         land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Challan Date") ///
+                        clearpage cwidth(`CWIDTH') ///
+                        title("`TITLE' `DATE' `SAMPLE'") ///
                         tlabel("tab1") ///
                         star(ols) ///
 						note("`NOTE'")
-						
-	tex3pt "`OUT'/Raw/REG12A" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Attest Date") ///
-                        tlabel("tab2") ///
-                        star(ols) ///
-                        note("`NOTE'")					
-						
-	tex3pt "`OUT'/Raw/REG12E" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Entry Date") ///
-                        tlabel("tab2") ///
-                        star(ols) ///
-                        note("`NOTE'")
+} // end type
 
-
-**1.3 VAT PAYMENT + HIGH COMPLIANCE + NONPAYER**
+**1.3 VAT PAYMENT INDICATOR + HIGH/LOW COMPLIANCE**
 eststo clear
 foreach type in C A E{
+if "`type'"=="C"{
+local DATE "Challan Date"
+}
+
+if "`type'"=="A"{
+local DATE "Attest Date"
+}
+
+if "`type'"=="E"{
+local DATE "Entry Date"
+}
 	forvalues i=1/4{
-		qui reg `type'_VAT_post`i'_trim treat_peer C_VAT_prior`i'_trim C_VAT_prior`i'_trim_sq if letter_delivered==1 & HICOMP==1 & C_paid_2012==0, vce(cluster clusid)
-		qui eststo REG`type'`i'
+		qui reg `type'_paid_post`i' treat_peer C_paid_2012 if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS', vce(cluster clusid)		
+		qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
 		qui sum `e(depvar)' if e(sample) & treat_peer==0
 		qui estadd scalar CTRLMEAN = r(mean)
 	}
-		esttab REG`type'* using "`OUT'/Raw/REG13`type'", /// 
+		esttab `KEEP_COLUMNS' using "`OUT'/Raw/REG13`type'`COMP'`INCLUDE_ZEROS'", /// 
 				replace fragment booktabs ///
 				label b(3) se(3) se ///
 				star(* .1 ** .05 *** .01) ///
@@ -140,49 +180,42 @@ foreach type in C A E{
 				 labels("Ctrl. Mean" "R-Sq" "Observations") ///
 				) // end stats		
 				
-}
 
-local TITLE "[High Compliance, Non-Payers] Payment Amounts Based on"
 
-	tex3pt "`OUT'/Raw/REG13C" using "`OUT'/LondonAnalysis.tex", ///
+local TITLE "Payment Indicators Based on"
+local SAMPLE "[`COMP' Compliance`ZERONOTE']"
+
+	tex3pt "`OUT'/Raw/REG13`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
                         land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Challan Date") ///
+                        clearpage cwidth(`CWIDTH') ///
+                        title("`TITLE' `DATE' `SAMPLE'") ///
                         tlabel("tab1") ///
                         star(ols) ///
 						note("`NOTE'")
-						
-	tex3pt "`OUT'/Raw/REG13A" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Attest Date") ///
-                        tlabel("tab2") ///
-                        star(ols) ///
-                        note("`NOTE'")					
-						
-	tex3pt "`OUT'/Raw/REG13E" using "`OUT'/LondonAnalysis.tex", ///
-                        land  ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Entry Date") ///
-                        tlabel("tab2") ///
-                        star(ols) ///
-                        note("`NOTE'")
 
+} //end type
 
-
-
-
-
-**1.4 VAT PAYMENT INDICATOR + HIGH COMPLIANCE + NONPAYER**
+**1.4 VAT PAYMENT INDICATOR + HIGH/LOW COMPLIANCE + NONPAYER**
 eststo clear
 foreach type in C A E{
+if "`type'"=="C"{
+local DATE "Challan Date"
+}
+
+if "`type'"=="A"{
+local DATE "Attest Date"
+}
+
+if "`type'"=="E"{
+local DATE "Entry Date"
+}
 	forvalues i=1/4{
-		qui reg `type'_paid_post`i' treat_peer if letter_delivered==1 & HICOMP==1 & C_paid_2012==0, vce(cluster clusid)
-		qui eststo REG`type'`i'
+		qui reg `type'_paid_post`i' treat_peer if letter_delivered==1 & HICOMP==`COMPNO' & C_paid_2012==0 `ZEROS', vce(cluster clusid)
+		qui eststo REG`COMPNO'`INCLUDE_ZEROS'`type'`i'
 		qui sum `e(depvar)' if e(sample) & treat_peer==0
 		qui estadd scalar CTRLMEAN = r(mean)
 	}
-		esttab REG`type'* using "`OUT'/Raw/REG14`type'", /// 
+		esttab `KEEP_COLUMNS' using "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'", /// 
 				replace fragment booktabs ///
 				label b(3) se(3) se ///
 				star(* .1 ** .05 *** .01) ///
@@ -192,30 +225,31 @@ foreach type in C A E{
 				 labels("Ctrl. Mean" "R-Sq" "Observations") ///
 				) // end stats		
 				
-}
 
-local TITLE "[High Compliance, Non-Payers] Payment Indicators Based on"
+local TITLE  "Payment Indicators Based on"
+local SAMPLE "[`COMP' Compliance, Non-Payers`ZERONOTE']"
 
-	tex3pt "`OUT'/Raw/REG14C" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Challan Date") ///
-                        tlabel("tab1") ///
-                        star(ols) ///
-						note("`NOTE'")
-						
-	tex3pt "`OUT'/Raw/REG14A" using "`OUT'/LondonAnalysis.tex", ///
-                        land ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Attest Date") ///
-                        tlabel("tab2") ///
-                        star(ols) ///
-                        note("`NOTE'")					
-						
-	tex3pt "`OUT'/Raw/REG14E" using "`OUT'/LondonAnalysis.tex", ///
+				
+if "`COMP'"=="Low" & "`INCLUDE_ZEROS'"=="0" & "`type'"=="E"{						
+	tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
                         land `END' ///
-                        clearpage cwidth(20mm) ///
-                        title("`TITLE' Entry Date") ///
+                        clearpage cwidth(`CWIDTH') ///
+                        title("`TITLE' Entry Date `SAMPLE'") ///
                         tlabel("tab2") ///
                         star(ols) ///
                         note("`NOTE'")
+}
+else{						
+	tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/LondonAnalysis.tex", ///
+                        land ///
+                        clearpage cwidth(`CWIDTH') ///
+                        title("`TITLE' `DATE' `SAMPLE'") ///
+                        tlabel("tab1") ///
+                        star(ols) ///
+						note("`NOTE'")
+}
+
+} //end type						
+						
+} //end COMP
+} //end INCLUDE_ZEROS
