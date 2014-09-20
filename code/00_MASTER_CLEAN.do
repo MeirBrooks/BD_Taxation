@@ -25,8 +25,6 @@ do "Y:\BD_Taxation\code\01_merge_id_to_uncollapsed_payments"
 include "Y:\BD_Taxation\code\01_merge_pay_reg_census"
 } //end createdata
 
-
-
 **CREATE FILE TO RECEIVE MERGES*
 if "`DATETYPE'"=="CHALLAN"{
 	use "X:\BD Taxation Core Data\Merged Data\CleanMerged_`DATETYPE'_20140319.dta", clear
