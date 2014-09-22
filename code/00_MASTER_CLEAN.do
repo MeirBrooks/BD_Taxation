@@ -1,5 +1,5 @@
 do "S:\bd-tax"
-
+set more off
 local createdata = 0
 
 **CREATE LOOP FOR EACH TYPE OF DATE**

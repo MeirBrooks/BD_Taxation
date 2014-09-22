@@ -27,10 +27,9 @@ local NOTE "Cluster robust standard errors in parentheses (firm cluster level). 
 
 **BEGIN REGRESSIONS*
 
-**SECTION 1 -- POST TREATMENT ANALYSIS HIGH/LOW COMPLIANCE + PAYMENT AMOUNT/INDICATORS + ZEROS/NON-ZEROS**
+**SECTION 1 -- PRE-PAYMENT TREATMENT ANALYSIS HIGH/LOW COMPLIANCE + PAYMENT AMOUNT/INDICATORS + ZEROS/NON-ZEROS**
 local PAYMENT_CTRLS "C_VAT_prior1_trim C_VAT_prior1_trim_sq"
 local KEEP_COLUMNS "REG\`COMPNO'\`INCLUDE_ZEROS'\`type'1 REG\`COMPNO'\`INCLUDE_ZEROS'\`type'4"
-local FILENAME "\`DATE2'_PostPayment_Analysis.tex"
 
 foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 	if "`type'"=="C"{
@@ -102,7 +101,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 			local SAMPLE "[`COMP' Compliance`ZERONOTE']"
 
 			if "`COMP'"=="High" & "`INCLUDE_ZEROS'"=="1"{
-				tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
+				tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
 									`START' land ///
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
@@ -111,7 +110,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									note("`NOTE'")
 			}
 			else {
-				tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
+				tex3pt "`OUT'/Raw/REG11`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
 									land ///
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
@@ -152,7 +151,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 			local TITLE "Payment Indicators Based on"
 			local SAMPLE "[`COMP' Compliance`ZERONOTE']"
 
-				tex3pt "`OUT'/Raw/REG13`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
+				tex3pt "`OUT'/Raw/REG13`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
 									land ///
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
@@ -191,10 +190,10 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 			local TITLE		 	"Payment Amounts Based on"
 			local SAMPLE		"[`COMP' Compliance, 2012 Non-Payers`ZERONOTE']"
 
-				tex3pt "`OUT'/Raw/REG12`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
+				tex3pt "`OUT'/Raw/REG12`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
 									land ///
 									clearpage cwidth(`CWIDTH') ///
-									title("`TITLE' `DATE' \\ `SAMPLE'") ///
+									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
 									star(ols) ///
 									note("`NOTE'")
@@ -231,7 +230,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 
 							
 			if "`COMP'"=="Low" & "`INCLUDE_ZEROS'"=="0"{						
-				tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
+				tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
 									land `END' ///
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
@@ -240,7 +239,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									note("`NOTE'")
 			}
 			else{						
-				tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
+				tex3pt "`OUT'/Raw/REG14`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`DATE2'_LondonAnalysis.tex", ///
 									land ///
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
@@ -252,12 +251,8 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 } //end
 } //end
 
- //END SECTION 1
 
 **SECTION 2 -- PRE-PERIOD ANALYSIS**
-eststo clear 
-local KEEP_COLUMNS "PP\`COMPNO'\`INCLUDE_ZEROS'\`type'1* PP\`COMPNO'\`INCLUDE_ZEROS'\`type'4*"
-local FILENAME "\`DATE2'_PrePayment_Analysis.tex"
 
 foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 	if "`type'"=="C"{
@@ -280,7 +275,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 		if "`INCLUDE_ZEROS'"=="0"{
 		local ZEROS "& \`type'_VAT_post\`i'!=0"
 		local ZERONOTE ", Excluding Analysis Period Non-Payers"
-		local ESTOUTADD ""
+		local ESTOUTADD "SPECIAL"
 		}
 		if "`INCLUDE_ZEROS'"=="1"{
 		local ZEROS ""
@@ -295,200 +290,5 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 			if "`COMP'"=="Low" {
 			local COMPNO = 0
 			}
-		
-		**2.1 VAT PAYMENT + HIGH/LOW COMPLIANCE**
-		foreach i in 1 4 {
-			foreach j in A B C {
-				qui reg `type'_VAT_pre`i'`j'_trim treat_peer C_paid_2012 C_VAT_2012_trim C_VAT_2012_trim_sq if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS', vce(cluster clusid)
-				qui eststo PP`COMPNO'`INCLUDE_ZEROS'`type'`i'`j'
-				qui sum `e(depvar)' if e(sample) & treat_peer==0
-				qui estadd scalar CTRLMEAN = r(mean)
 			
-			}
-		}
-		
-		**RUN SAMPLE 1 USING SAMPLE FOR SAMPLE 4**
-			local i = 1 
-			foreach j in A B C {
-			qui reg `type'_VAT_pre`i'`j'_trim treat_peer C_paid_2012 C_VAT_2012_trim C_VAT_2012_trim_sq if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS' & e(sample), vce(cluster clusid)
-				eststo SPECIAL`j'
-				qui sum `e(depvar)' if e(sample) & treat_peer==0
-				qui estadd scalar CTRLMEAN = r(mean)
-			}
-		
-				esttab `KEEP_COLUMNS' `ESTOUTADD' using "`OUT'/Raw/PP21`type'`COMP'`INCLUDE_ZEROS'", /// 
-						replace fragment booktabs ///
-						label b(3) se(3) se ///
-						star(* .1 ** .05 *** .01) ///
-						stats(CTRLMEAN r2 N, ///
-						 fmt(3 3 0) ///
-						 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
-						 labels("Ctrl. Mean" "R-Sq" "Observations") ///
-						) // end stats		
-						
-			local TITLE  "Pre-Payment Period Amounts Based on"
-			local SAMPLE "[`COMP' Compliance`ZERONOTE']"
-
-			if "`COMP'"=="High" & "`INCLUDE_ZEROS'"=="1"{
-				tex3pt "`OUT'/Raw/PP21`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
-									`START' land ///
-									clearpage ///
-									title("`TITLE' `DATE' `SAMPLE'") ///
-									tlabel("tab1") ///
-									star(ols) ///
-									note("`NOTE'")
-			}
-			else {
-				tex3pt "`OUT'/Raw/PP21`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
-									land ///
-									clearpage ///
-									title("`TITLE' `DATE' `SAMPLE'") ///
-									tlabel("tab1") ///
-									star(ols) ///
-									note("`NOTE'")
-			}
 			
-
-			
-		**2.2 VAT INDICATOR + HIGH/LOW COMPLIANCE**
-		foreach i in 1 4 {
-			foreach j in A B C {
-				qui reg `type'_paid_pre`i'`j' treat_peer C_paid_2012 if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS', vce(cluster clusid)
-				qui eststo PP`COMPNO'`INCLUDE_ZEROS'`type'`i'`j'
-				qui sum `e(depvar)' if e(sample) & treat_peer==0
-				qui estadd scalar CTRLMEAN = r(mean)
-			
-			}
-		}
-		
-		**RUN SAMPLE 1 USING SAMPLE FOR SAMPLE 4**
-			local i = 1 
-			foreach j in A B C {
-			qui reg `type'_paid_pre`i'`j' treat_peer C_paid_2012 if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS' & e(sample), vce(cluster clusid)
-				eststo SPECIAL`j'
-				qui sum `e(depvar)' if e(sample) & treat_peer==0
-				qui estadd scalar CTRLMEAN = r(mean)
-			}
-		
-				esttab `KEEP_COLUMNS' `ESTOUTADD' using "`OUT'/Raw/PP22`type'`COMP'`INCLUDE_ZEROS'", /// 
-						replace fragment booktabs ///
-						label b(3) se(3) se ///
-						star(* .1 ** .05 *** .01) ///
-						stats(CTRLMEAN r2 N, ///
-						 fmt(3 3 0) ///
-						 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
-						 labels("Ctrl. Mean" "R-Sq" "Observations") ///
-						) // end stats		
-						
-			local TITLE "Pre-Payment Period Indicators Based on"
-			local SAMPLE "[`COMP' Compliance`ZERONOTE']"
-
-
-				tex3pt "`OUT'/Raw/PP22`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
-									land ///
-									clearpage ///
-									title("`TITLE' `DATE' `SAMPLE'") ///
-									tlabel("tab1") ///
-									star(ols) ///
-									note("`NOTE'")
-									
-									
-**2.3 VAT PAYMENT + HIGH/LOW COMPLIANCE + NONPAYERS IN 2012**
-		foreach i in 1 4 {
-			foreach j in A B C {
-				qui reg `type'_VAT_pre`i'`j'_trim treat_peer if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS' & C_paid_2012==0 , vce(cluster clusid)
-				qui eststo PP`COMPNO'`INCLUDE_ZEROS'`type'`i'`j'
-				qui sum `e(depvar)' if e(sample) & treat_peer==0
-				qui estadd scalar CTRLMEAN = r(mean)
-			
-			}
-		}
-		
-		**RUN SAMPLE 1 USING SAMPLE FOR SAMPLE 4**
-			local i = 1 
-			foreach j in A B C {
-			qui reg `type'_VAT_pre`i'`j'_trim treat_peer if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS' & C_paid_2012==0  & e(sample), vce(cluster clusid)
-				eststo SPECIAL`j'
-				qui sum `e(depvar)' if e(sample) & treat_peer==0
-				qui estadd scalar CTRLMEAN = r(mean)
-			}
-		
-				esttab `KEEP_COLUMNS' `ESTOUTADD' using "`OUT'/Raw/PP23`type'`COMP'`INCLUDE_ZEROS'", /// 
-						replace fragment booktabs ///
-						label b(3) se(3) se ///
-						star(* .1 ** .05 *** .01) ///
-						stats(CTRLMEAN r2 N, ///
-						 fmt(3 3 0) ///
-						 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
-						 labels("Ctrl. Mean" "R-Sq" "Observations") ///
-						) // end stats		
-						
-			local TITLE  "Pre-Payment Period Amounts Based on"
-			local SAMPLE "[`COMP' Compliance, 2012 Non-Payers`ZERONOTE']"
-
-
-
-				tex3pt "`OUT'/Raw/PP23`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
-									land ///
-									clearpage ///
-									title("`TITLE' `DATE' `SAMPLE'") ///
-									tlabel("tab1") ///
-									star(ols) ///
-									note("`NOTE'")
-
-	**2.4 VAT INDICATOR + HIGH/LOW COMPLIANCE + NONPAYERS IN 2012**
-		foreach i in 1 4 {
-			foreach j in A B C {
-				qui reg `type'_paid_pre`i'`j' treat_peer if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS' & C_paid_2012==0, vce(cluster clusid)
-				qui eststo PP`COMPNO'`INCLUDE_ZEROS'`type'`i'`j'
-				qui sum `e(depvar)' if e(sample) & treat_peer==0
-				qui estadd scalar CTRLMEAN = r(mean)
-			
-			}
-		}
-		
-		**RUN SAMPLE 1 USING SAMPLE FOR SAMPLE 4**
-			local i = 1 
-			foreach j in A B C {
-			qui reg `type'_paid_pre`i'`j' treat_peer if letter_delivered==1 & HICOMP==`COMPNO' `ZEROS' & e(sample) & C_paid_2012==0, vce(cluster clusid)
-				eststo SPECIAL`j'
-				qui sum `e(depvar)' if e(sample) & treat_peer==0
-				qui estadd scalar CTRLMEAN = r(mean)
-			}
-		
-				esttab `KEEP_COLUMNS' `ESTOUTADD' using "`OUT'/Raw/PP24`type'`COMP'`INCLUDE_ZEROS'", /// 
-						replace fragment booktabs ///
-						label b(3) se(3) se ///
-						star(* .1 ** .05 *** .01) ///
-						stats(CTRLMEAN r2 N, ///
-						 fmt(3 3 0) ///
-						 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
-						 labels("Ctrl. Mean" "R-Sq" "Observations") ///
-						) // end stats		
-						
-			local TITLE "Pre-Payment Period Indicators Based on"
-			local SAMPLE "[`COMP' Compliance, 2012 Non-Payers`ZERONOTE']"
-
-
-			if "`COMP'"=="Low" & "`INCLUDE_ZEROS'"=="0"{						
-				tex3pt "`OUT'/Raw/PP24`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
-									land `END' ///
-									clearpage ///
-									title("`TITLE' `DATE' `SAMPLE'") ///
-									tlabel("tab2") ///
-									star(ols) ///
-									note("`NOTE'")
-			}
-			else{						
-				tex3pt "`OUT'/Raw/PP24`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
-									land ///
-									clearpage ///
-									title("`TITLE' `DATE' `SAMPLE'") ///
-									tlabel("tab1") ///
-									star(ols) ///
-									note("`NOTE'")
-			}					
-			
-		} //END COMP
-	} //END INCLUDE_ZEROS
-} //END TYPE
