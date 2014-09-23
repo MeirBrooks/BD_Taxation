@@ -26,7 +26,7 @@ local ESTOPT replace label booktabs fragment b(3) se(3) nonotes
 local NOTE "Cluster robust standard errors in parentheses (firm cluster level). All VAT payment variables top-coded at 10,000 Tk.  Squared VAT payment terms are the squared top-coded variables. High compliance cluster implies $>$15% of firms in a cluster paid VAT in 2012."
 
 **BEGIN REGRESSIONS*
-
+/*
 **SECTION 1 -- POST TREATMENT ANALYSIS HIGH/LOW COMPLIANCE + PAYMENT AMOUNT/INDICATORS + ZEROS/NON-ZEROS**
 local PAYMENT_CTRLS "C_VAT_prior1_trim C_VAT_prior1_trim_sq"
 local KEEP_COLUMNS "REG\`COMPNO'\`INCLUDE_ZEROS'\`type'1 REG\`COMPNO'\`INCLUDE_ZEROS'\`type'4"
@@ -194,7 +194,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 				tex3pt "`OUT'/Raw/REG12`type'`COMP'`INCLUDE_ZEROS'" using "`OUT'/`FILENAME'", ///
 									land ///
 									clearpage cwidth(`CWIDTH') ///
-									title("`TITLE' `DATE' \\ `SAMPLE'") ///
+									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
 									star(ols) ///
 									note("`NOTE'")
@@ -252,7 +252,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 } //end
 } //end
 
- //END SECTION 1
+*/  //END SECTION 1
 
 **SECTION 2 -- PRE-PERIOD ANALYSIS**
 eststo clear 
@@ -492,3 +492,66 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 		} //END COMP
 	} //END INCLUDE_ZEROS
 } //END TYPE
+*/
+**SECTION 3 -- TOBIT SPECIFICATION 
+cap log close
+log using "Y:\BD_Taxation\Tobit_VAT4.txt", replace t
+
+**EXPLORATORY WORK**
+eststo clear
+**RUN TOBIT**
+**Betas indicator how a one unit change in a regressor affects the latent dependent variable Y*.
+tobit C_VAT_post4_trim treat_peer C_paid_2012 C_VAT_prior1_trim C_VAT_prior1_trim_sq ///
+		if letter_delivered==1 & HICOMP==1, ///
+		vce(cluster clusid) ll(0)
+		
+		eststo TEMP1
+
+**RUN POSTESTIMATION**
+**Marginal effects of E(Y|Y>0) 
+**Gives the marginal effects for the expected value of Y conditional on Y being uncensored.  
+estpost margins, dydx(*) predict(e(0,.))
+eststo MARGINS1
+
+**Marginal Effects of Pr(Y*>0) describe how the probability of being uncensored changes with respect to the regressors
+est restore TEMP1
+estpost margins, dydx(*) predict(pr(0,.))
+eststo MARGINS2
+
+**Marginal effects of E(Y*|Y>0)=E(Y)
+**Gives the marginal effects for the unconditional expected value of Y, given that uncensored values are >0. 
+est restore TEMP1
+estpost margins, dydx(*) predict(ystar(0,.))
+eststo MARGINS3
+*same as: 
+	*margins, dydx(*) expression(predict(ystar(0,.))*predict(pr(0,.)))
+	*i.e. decomposes the effect into an effect on the uncensored proportion of the distribution and 
+	*the probability that an observation will fall in the positive part of the distribution
+
+**In this case: 
+**Those treated with peers as 4% more likely to be uncensored 
+**OR 
+**those treated with peers are 4% less likely to be censored in the data (i.e. paid zero tax).
+
+**NOTE: Report betas + all three margins
+
+
+*********************
+**REGRESSION OUTPUT**
+*********************
+esttab, label b(3) se(3) se ///
+		star(* .1 ** .05 *** .01) //
+
+**COLUMN1 = BETAS FROM TOBIT (i.e. Marginal effects of regressors on latent variable Y*)
+**COLUMN2 = Marginal Effects for the expected value of Y conditional on Y being uncensored [i.e. E(Y|Y>0)]
+**COLUMN3 = Marginal effects for Pr(Y*>0) - describes how the probability of being uncensored changes with respect to the regressors (i.e. those treated at x% more likely to pay >0Tk tax)
+**COLUMN4 = Marginal effects for the unconditional expected value of Y, given that uncensored values are >0 [i.e. E(Y*|Y>0)=E(Y)]
+
+**MUSHFIQ: I believe Column2 & Column3 were the effects you were referring too.
+**NOTE: I believe we could also censor the data from above @ 10k and used the untrimmed variables
+
+cap log close
+
+
+
+

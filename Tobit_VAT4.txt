@@ -1,0 +1,176 @@
+------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  Y:\BD_Taxation\Tobit_VAT4.txt
+  log type:  text
+ opened on:  22 Sep 2014, 22:18:35
+
+. 
+. **EXPLORATORY WORK**
+. eststo clear
+
+. **RUN TOBIT**
+. **Betas indicator how a one unit change in a regressor affects the latent dependent variable Y*.
+. tobit C_VAT_post4_trim treat_peer C_paid_2012 C_VAT_prior1_trim C_VAT_prior1_trim_sq ///
+>                 if letter_delivered==1 & HICOMP==1, ///
+>                 vce(cluster clusid) ll(0)
+
+Tobit regression                                  Number of obs   =       4071
+                                                  F(   4,   4067) =     306.84
+                                                  Prob > F        =     0.0000
+Log pseudolikelihood = -10996.289                 Pseudo R2       =     0.1062
+
+                                       (Std. Err. adjusted for 394 clusters in clusid)
+--------------------------------------------------------------------------------------
+                     |               Robust
+    C_VAT_post4_trim |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+---------------------+----------------------------------------------------------------
+          treat_peer |   1397.963   570.9927     2.45   0.014     278.5048    2517.421
+         C_paid_2012 |   1961.075   1560.366     1.26   0.209    -1098.095    5020.246
+   C_VAT_prior1_trim |   .5293058   .6026297     0.88   0.380    -.6521784     1.71079
+C_VAT_prior1_trim_sq |   .0000991   .0000511     1.94   0.052    -1.06e-06    .0001992
+               _cons |  -12041.62   709.9709   -16.96   0.000    -13433.55   -10649.69
+---------------------+----------------------------------------------------------------
+              /sigma |   6357.935   314.0439                      5742.237    6973.633
+--------------------------------------------------------------------------------------
+  Obs. summary:       3055  left-censored observations at C_VA~t4_trim<=0
+                      1016     uncensored observations
+                         0 right-censored observations
+
+.                 
+.                 eststo TEMP1
+
+. 
+. **RUN POSTESTIMATION**
+. **Marginal effects of E(Y|Y>0) 
+. **Gives the marginal effects for the expected value of Y conditional on Y being uncensored.  
+. estpost margins, dydx(*) predict(e(0,.))
+
+Average marginal effects                          Number of obs   =       4071
+Model VCE    : Robust
+
+Expression   : E(C_VAT_post4_trim|C_VAT_post4_trim>0), predict(e(0,.))
+dy/dx w.r.t. : treat_peer C_paid_2012 C_VAT_prior1_trim C_VAT_prior1_trim_sq
+
+--------------------------------------------------------------------------------------
+                     |            Delta-method
+                     |      dy/dx   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------------+----------------------------------------------------------------
+          treat_peer |    372.663   152.1711     2.45   0.014     74.41305    670.9129
+         C_paid_2012 |   522.7751   413.8204     1.26   0.206     -288.298    1333.848
+   C_VAT_prior1_trim |   .1411001   .1611875     0.88   0.381    -.1748217    .4570218
+C_VAT_prior1_trim_sq |   .0000264   .0000135     1.95   0.051    -7.40e-08    .0000529
+--------------------------------------------------------------------------------------
+
+. eststo MARGINS1
+
+. 
+. **Marginal Effects of Pr(Y*>0) describe how the probability of being uncensored changes with respect to the regressors
+. est restore TEMP1
+(results TEMP1 are active now)
+
+. estpost margins, dydx(*) predict(pr(0,.))
+
+Average marginal effects                          Number of obs   =       4071
+Model VCE    : Robust
+
+Expression   : Pr(C_VAT_post4_trim>0), predict(pr(0,.))
+dy/dx w.r.t. : treat_peer C_paid_2012 C_VAT_prior1_trim C_VAT_prior1_trim_sq
+
+--------------------------------------------------------------------------------------
+                     |            Delta-method
+                     |      dy/dx   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------------+----------------------------------------------------------------
+          treat_peer |    .033485   .0142271     2.35   0.019     .0056003    .0613696
+         C_paid_2012 |    .046973   .0371364     1.26   0.206     -.025813    .1197591
+   C_VAT_prior1_trim |   .0000127   .0000145     0.87   0.384    -.0000158    .0000412
+C_VAT_prior1_trim_sq |   2.37e-09   1.20e-09     1.98   0.048     1.91e-11    4.73e-09
+--------------------------------------------------------------------------------------
+
+. eststo MARGINS2
+
+. 
+. **Marginal effects of E(Y*|Y>0)=E(Y)
+. **Gives the marginal effects for the unconditional expected value of Y, given that uncensored values are >0. 
+. est restore TEMP1
+(results TEMP1 are active now)
+
+. estpost margins, dydx(*) predict(ystar(0,.))
+
+Average marginal effects                          Number of obs   =       4071
+Model VCE    : Robust
+
+Expression   : E(C_VAT_post4_trim*|C_VAT_post4_trim>0), predict(ystar(0,.))
+dy/dx w.r.t. : treat_peer C_paid_2012 C_VAT_prior1_trim C_VAT_prior1_trim_sq
+
+--------------------------------------------------------------------------------------
+                     |            Delta-method
+                     |      dy/dx   Std. Err.      z    P>|z|     [95% Conf. Interval]
+---------------------+----------------------------------------------------------------
+          treat_peer |   376.0166   154.0142     2.44   0.015     74.15432    677.8789
+         C_paid_2012 |   527.4795   417.2925     1.26   0.206    -290.3988    1345.358
+   C_VAT_prior1_trim |   .1423698   .1635393     0.87   0.384    -.1781614     .462901
+C_VAT_prior1_trim_sq |   .0000267   .0000134     1.98   0.047     3.07e-07     .000053
+--------------------------------------------------------------------------------------
+
+. eststo MARGINS3
+
+. *same as: 
+.         *margins, dydx(*) expression(predict(ystar(0,.))*predict(pr(0,.)))
+.         *i.e. decomposes the effect into an effect on the uncensored proportion of the distribution and 
+.         *the probability that an observation will fall in the positive part of the distribution
+. 
+. **In this case: 
+. **Those treated with peers as 4% more likely to be uncensored 
+. **OR 
+. **those treated with peers are 4% less likely to be censored in the data (i.e. paid zero tax).
+. 
+. **NOTE: Report betas + all three margins
+. 
+. 
+. *********************
+. **REGRESSION OUTPUT**
+. *********************
+. esttab, label b(3) se(3) se ///
+>                 star(* .1 ** .05 *** .01) //
+
+------------------------------------------------------------------------------------
+                              (1)             (2)             (3)             (4)   
+                     After Letter    After Letter    After Letter    After Letter   
+------------------------------------------------------------------------------------
+main                                                                                
+Peer Info                1397.963**       372.663**         0.033**       376.017** 
+                        (570.993)       (152.171)         (0.014)       (154.014)   
+
+0/1 Paid in 2012         1961.075         522.775           0.047         527.480   
+                       (1560.366)       (413.820)         (0.037)       (417.293)   
+
+Jan12-May13                 0.529           0.141           0.000           0.142   
+                          (0.603)         (0.161)         (0.000)         (0.164)   
+
+Jan12-May13 Sq              0.000*          0.000*          0.000**         0.000** 
+                          (0.000)         (0.000)         (0.000)         (0.000)   
+
+Constant               -12041.623***                                                
+                        (709.971)                                                   
+------------------------------------------------------------------------------------
+sigma                                                                               
+Constant                 6357.935***                                                
+                        (314.044)                                                   
+------------------------------------------------------------------------------------
+Observations                 4071            4071            4071            4071   
+------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<.1, ** p<.05, *** p<.01
+
+. 
+. **COLUMN1 = BETAS FROM TOBIT (i.e. Marginal effects of regressors on latent variable Y*)
+. **COLUMN2 = Marginal Effects for the expected value of Y conditional on Y being uncensored [i.e. E(Y|Y>0)]
+. **COLUMN3 = Marginal effects for Pr(Y*>0) - describes how the probability of being uncensored changes with respect to the re
+> gressors (i.e. those treated at x% more likely to pay >0Tk tax)
+. **COLUMN4 = Marginal effects for the unconditional expected value of Y, given that uncensored values are >0 [i.e. E(Y*|Y>0)=
+> E(Y)]
+. 
+. **MUSHFIQ: I believe Column2 & Column3 were the effects you were referring too.
+. **NOTE: I believe we could also censor the data from above @ 10k and used the untrimmed variables
+. 
+. cap log close

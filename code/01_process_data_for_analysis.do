@@ -186,17 +186,17 @@ forv i=1/4{
 		gen 	`PT'_VAT_pre`i'`j'_trim_sq =	`PT'_VAT_pre`i'`j'_trim^2
 		
 		local LABEL : var label `PT'_VAT_pre`i'`j'
-		la var `PT'_VAT_pre`i'`j'_trim "`LABEL'"
-		la var `PT'_VAT_pre`i'`j'_trim_sq "`LABEL' Sq"
+		la var `PT'_VAT_pre`i'`j'_trim 		"`LABEL'"
+		la var `PT'_VAT_pre`i'`j'_trim_sq 	"`LABEL' Sq"
 		} // end i!=3
 	} //end j
 } //end i
 
 **CREATE 2012 AMOUNTS TRIMMMED
-gen `PT'_VAT_2012_trim = min(`PT'_VAT_2012, 10000)
-gen `PT'_VAT_2012_trim_sq = `PT'_VAT_2012_trim^2
-la var `PT'_VAT_2012_trim "Paid in 2012"
-la var `PT'_VAT_2012_trim_sq "Paid in 2012 Sq"
+gen `PT'_VAT_2012_trim = 		min(`PT'_VAT_2012, 10000)
+gen `PT'_VAT_2012_trim_sq = 	`PT'_VAT_2012_trim^2
+la var `PT'_VAT_2012_trim 		"Paid in 2012"
+la var `PT'_VAT_2012_trim_sq 	"Paid in 2012 Sq"
 
 } //end PT
 
@@ -209,9 +209,5 @@ gen HICOMP =  mean_paid_2012>.15
 	
 **RANDOM LABELING
 la var treat_peer "Peer Info"
-
-
-save "X:\BD Taxation Core Data\Merged Data\for_analysis_v4.dta", replace
-
 
 
