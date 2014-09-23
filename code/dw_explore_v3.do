@@ -7,8 +7,11 @@ NOTES:
 1 - Always uses only firms who's letters were delivered
 2 - high compliance is where we see the action */
 
-use "X:\BD Taxation Core Data\Merged Data\for_analysis_v4.dta", clear
 pause on 
+set more off
+
+use "X:\BD Taxation Core Data\Merged Data\for_analysis_v4.dta", clear
+
 drop *_num* *pVATContribution* reg* __*
 gen sample = . 
 
@@ -23,14 +26,14 @@ local CWIDTH 4cm
 **SET GLOBAL ESTTAB SETTINGS*
 local STARS "star(* .1 ** .05 *** .01)"
 local ESTOPT replace label booktabs fragment b(3) se(3) nonotes 
-local NOTE "Cluster robust standard errors in parentheses (firm cluster level). All VAT payment variables top-coded at 10,000 Tk.  Squared VAT payment terms are the squared top-coded variables. High compliance cluster implies $>$15% of firms in a cluster paid VAT in 2012."
+local NOTE "Clusters are defined as geographic groups of firms. All VAT payment variables top-coded at 10,000 Tk.  Squared VAT payment terms are the squared top-coded variables. High compliance cluster implies $>$15% of firms in a cluster paid VAT in 2012."
 
 **BEGIN REGRESSIONS*
-/*
+
 **SECTION 1 -- POST TREATMENT ANALYSIS HIGH/LOW COMPLIANCE + PAYMENT AMOUNT/INDICATORS + ZEROS/NON-ZEROS**
 local PAYMENT_CTRLS "C_VAT_prior1_trim C_VAT_prior1_trim_sq"
 local KEEP_COLUMNS "REG\`COMPNO'\`INCLUDE_ZEROS'\`type'1 REG\`COMPNO'\`INCLUDE_ZEROS'\`type'4"
-local FILENAME "\`DATE2'_PostPayment_Analysis.tex"
+local FILENAME "\`DATE2'_OLS_Post-Payment.tex"
 
 foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 	if "`type'"=="C"{
@@ -107,7 +110,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 			}
 			else {
@@ -116,7 +119,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 			}
 
@@ -157,7 +160,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 									
 		**1.2 VAT PAYMENT + HIGH/LOW COMPLIANCE + NONPAYER**
@@ -196,7 +199,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 
 		**1.4 VAT PAYMENT INDICATOR + HIGH/LOW COMPLIANCE + NONPAYER**
@@ -236,7 +239,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab2") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 			}
 			else{						
@@ -245,19 +248,19 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage cwidth(`CWIDTH') ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 			}					
 } //end					
 } //end
 } //end
 
-*/  //END SECTION 1
+  //END SECTION 1
 
 **SECTION 2 -- PRE-PERIOD ANALYSIS**
 eststo clear 
 local KEEP_COLUMNS "PP\`COMPNO'\`INCLUDE_ZEROS'\`type'1* PP\`COMPNO'\`INCLUDE_ZEROS'\`type'4*"
-local FILENAME "\`DATE2'_PrePayment_Analysis.tex"
+local FILENAME "\`DATE2'_OLS_Pre-Payment.tex"
 
 foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 	if "`type'"=="C"{
@@ -335,7 +338,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 			}
 			else {
@@ -344,7 +347,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 			}
 			
@@ -389,7 +392,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 									
 									
@@ -433,7 +436,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 
 	**2.4 VAT INDICATOR + HIGH/LOW COMPLIANCE + NONPAYERS IN 2012**
@@ -476,7 +479,7 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab2") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 			}
 			else{						
@@ -485,17 +488,353 @@ foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
 									clearpage ///
 									title("`TITLE' `DATE' `SAMPLE'") ///
 									tlabel("tab1") ///
-									star(ols) ///
+									star(cluster clusid) ///
 									note("`NOTE'")
 			}					
 			
 		} //END COMP
 	} //END INCLUDE_ZEROS
 } //END TYPE
-*/
-**SECTION 3 -- TOBIT SPECIFICATION 
+
+
+
+**SECTION 3 -- TOBIT SPECIFICATION ON POST-PERIOD ANALYSIS**
+eststo clear 
+local FILENAME "\`DATE2'_TOBIT_Post-Payment.tex"
+local CWIDTH "3.5cm"
+
+
+foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
+	if "`type'"=="C"{
+	local DATE "Challan Date"
+	local DATE2 "Challan"
+	}
+
+	if "`type'"=="A"{
+	local DATE "Attest Date"
+	local DATE2 "Attest"
+	}
+
+	if "`type'"=="E"{
+	local DATE "Entry Date"
+	local DATE2 "Entry"
+	}
+
+		foreach COMP in High Low{
+			if "`COMP'"=="High" {
+			local COMPNO = 1
+			}
+			if "`COMP'"=="Low" {
+			local COMPNO = 0
+			}
+			
+		**RUN TOBIT ON POST-LETTER PERIOD VARIABLES INCLUDING 2012 NON-PAYERS**
+			local TITLE		 	"Tobit of Payment Amounts Based on"
+			local SAMPLE		"[`COMP' Compliance]"
+		
+			forv i = 1(3)4{
+			tobit `type'_VAT_post`i'_trim treat_peer C_paid_2012 C_VAT_prior1_trim C_VAT_prior1_trim_sq ///
+					if letter_delivered==1 & HICOMP==`COMPNO', ///
+					vce(cluster clusid) ll(0) // ll = lower limit of 0
+				
+				eststo T`type'`i' 
+				
+				**MARGIN 1:
+				estpost margins, dydx(*) predict(e(0,.))
+				eststo TM1`type'`i' 
+				
+				**MARGIN 2: 
+				est restore T`type'`i' 
+				estpost margins, dydx(*) predict(pr(0,.))
+				eststo TM2`type'`i' 
+				
+				**MARGIN 3: 
+				est restore T`type'`i' 
+				estpost margins, dydx(*) predict(ystar(0,.))
+				eststo TM3`type'`i' 
+				
+				esttab T`type'`i' TM1`type'`i' TM2`type'`i' using "`OUT'/Raw/TOBIT_`type'`i'`COMP'", /// 
+						replace fragment booktabs ///
+						label b(3) se(3) se ///
+						star(* .1 ** .05 *** .01) ///
+						eqlabels(, none) ///
+						mgroups("Tobit Coef." "Marginal Effects", ///
+						 pattern(1 1 0) ///
+                         prefix(\multicolumn{@span}{c}{) ////
+                         suffix(}) ///
+                         span erepeat(\cmidrule(lr){@span}) ///
+                        ) ///end mgroups
+						stats(ll F p N, ///
+						 fmt(3 3 3 0) ///
+						 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
+						 labels("Log-Likelihood" "Model F-Stat" "F-Stat P-Value" "Observations") ///
+						) // end stats
+
+						
+				if `i' == 1 & "`COMP'" == "High"{
+					tex3pt "`OUT'/Raw/TOBIT_`type'`i'`COMP'" using "`OUT'/`FILENAME'", ///
+						land `START' ///
+						clearpage ///
+						cwidth(`CWIDTH') ///
+						title("`TITLE' `DATE' `SAMPLE'") ///
+						tlabel("tab2") ///
+						star(cluster clusid) ///
+						note("`NOTE'")
+				}
+				else{ 
+					tex3pt "`OUT'/Raw/TOBIT_`type'`i'`COMP'" using "`OUT'/`FILENAME'", ///
+						land  ///
+						clearpage ///
+						cwidth(`CWIDTH') ///
+						title("`TITLE' `DATE' `SAMPLE'") ///
+						tlabel("tab2") ///
+						star(cluster clusid) ///
+						note("`NOTE'")
+				}
+			} //END forvalues
+
+			**RUN TOBIT ON POST-LETTER PERIOD VARIABLES EXCLUDING 2012 NON-PAYERS**
+			local TITLE		 	"Tobit of Payment Amounts Based on"
+			local SAMPLE		"[`COMP' Compliance, 2012 Non-Payers]"
+		
+			forv i = 1(3)4{
+			tobit `type'_VAT_post`i'_trim treat_peer C_VAT_prior1_trim C_VAT_prior1_trim_sq ///
+					if letter_delivered==1 & HICOMP==`COMPNO' & C_paid_2012==0, ///
+					vce(cluster clusid) ll(0) // ll = lower limit of 0
+				
+				eststo T`type'`i' 
+				
+				**MARGIN 1:
+				estpost margins, dydx(*) predict(e(0,.))
+				eststo TM1`type'`i' 
+				
+				**MARGIN 2: 
+				est restore T`type'`i' 
+				estpost margins, dydx(*) predict(pr(0,.))
+				eststo TM2`type'`i' 
+				
+				**MARGIN 3: 
+				est restore T`type'`i' 
+				estpost margins, dydx(*) predict(ystar(0,.))
+				eststo TM3`type'`i' 
+				
+				esttab T`type'`i' TM1`type'`i' TM2`type'`i' using "`OUT'/Raw/TOBITNP_`type'`i'`COMP'", /// 
+						replace fragment booktabs ///
+						label b(3) se(3) se ///
+						star(* .1 ** .05 *** .01) ///
+						eqlabels(, none) ///
+						mgroups("Tobit Coef." "Marginal Effects", ///
+						 pattern(1 1 0) ///
+                         prefix(\multicolumn{@span}{c}{) ////
+                         suffix(}) ///
+                         span erepeat(\cmidrule(lr){@span}) ///
+                        ) ///end mgroups
+						stats(ll F p N, ///
+						 fmt(3 3 3 0) ///
+						 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
+						 labels("Log-Likelihood" "Model F-Stat" "F-Stat P-Value" "Observations") ///
+						) // end stats
+
+				if "`i'" == "4" & "`COMP'" == "Low"{
+					tex3pt "`OUT'/Raw/TOBITNP_`type'`i'`COMP'" using "`OUT'/`FILENAME'", ///
+						land `END' ///
+						clearpage ///
+						cwidth(`CWIDTH') ///
+						title("`TITLE' `DATE' `SAMPLE'") ///
+						tlabel("tab2") ///
+						star(cluster clusid) ///
+						note("`NOTE'")
+				}
+				else{ 
+					tex3pt "`OUT'/Raw/TOBITNP_`type'`i'`COMP'" using "`OUT'/`FILENAME'", ///
+						land  ///
+						clearpage ///
+						cwidth(`CWIDTH') ///
+						title("`TITLE' `DATE' `SAMPLE'") ///
+						tlabel("tab2") ///
+						star(cluster clusid) ///
+						note("`NOTE'")
+				}
+			} //end forvalues
+		} //END TYPE
+} //END COMP
+
+
+
+**SECTION 4 -- TOBIT SPECIFICATION PRE-PERIOD1**
+eststo clear 
+local CWIDTH "3.5cm"
+
+foreach type in C{ //C FOR CHALLAN, A FOR ATTEST, E FOR ENTRY
+	if "`type'"=="C"{
+	local DATE "Challan Date"
+	local DATE2 "Challan"
+	}
+
+	if "`type'"=="A"{
+	local DATE "Attest Date"
+	local DATE2 "Attest"
+	}
+
+	if "`type'"=="E"{
+	local DATE "Entry Date"
+	local DATE2 "Entry"
+	}
+	
+	foreach PERIOD in 1 4{
+		if "`PERIOD'" == "1"{
+		local FILENAME "\`DATE2'_TOBIT_P1-PrePayment.tex"
+		}
+
+		if "`PERIOD'" == "4"{
+		local FILENAME "\`DATE2'_TOBIT_P4-PrePayment.tex"
+		}
+
+			foreach COMP in High Low{
+				if "`COMP'"=="High" {
+				local COMPNO = 1
+				}
+				if "`COMP'"=="Low" {
+				local COMPNO = 0
+				}
+				
+			**RUN TOBIT ON POST-LETTER PERIOD VARIABLES INCLUDING 2012 NON-PAYERS**
+				local TITLE		 	"Tobit of Pre-Payment Period Amounts Based on"
+				local SAMPLE		"[`COMP' Compliance]"
+			
+				foreach i in A B C {
+				tobit `type'_VAT_pre`PERIOD'`i'_trim treat_peer C_paid_2012 C_VAT_2012_trim C_VAT_2012_trim_sq ///
+						if letter_delivered==1 & HICOMP==`COMPNO', ///
+						vce(cluster clusid) ll(0) // ll = lower limit of 0
+					
+					eststo T`type'`i' 
+					
+					**MARGIN 1:
+					estpost margins, dydx(*) predict(e(0,.))
+					eststo TM1`type'`i' 
+					
+					**MARGIN 2: 
+					est restore T`type'`i' 
+					estpost margins, dydx(*) predict(pr(0,.))
+					eststo TM2`type'`i' 
+					
+					**MARGIN 3: 
+					est restore T`type'`i' 
+					estpost margins, dydx(*) predict(ystar(0,.))
+					eststo TM3`type'`i'
+					
+					esttab T`type'`i' TM1`type'`i' TM2`type'`i' using "`OUT'/Raw/TOBIT`PERIOD'_`type'`i'`COMP'", /// 
+							replace fragment booktabs ///
+							label b(3) se(3) se ///
+							star(* .1 ** .05 *** .01) ///
+							eqlabels(, none) ///
+							mgroups("Tobit Coef." "Marginal Effects", ///
+							 pattern(1 1 0) ///
+							 prefix(\multicolumn{@span}{c}{) ////
+							 suffix(}) ///
+							 span erepeat(\cmidrule(lr){@span}) ///
+							) ///end mgroups
+							stats(ll F p N, ///
+							 fmt(3 3 3 0) ///
+							 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
+							 labels("Log-Likelihood" "Model F-Stat" "F-Stat P-Value" "Observations") ///
+							) // end stats
+
+							
+					if "`i'" == "A" & "`COMP'" == "High"{
+						tex3pt "`OUT'/Raw/TOBIT`PERIOD'_`type'`i'`COMP'" using "`OUT'/`FILENAME'", ///
+							land `START' ///
+							clearpage ///
+							cwidth(`CWIDTH') ///
+							title("`TITLE' `DATE' `SAMPLE'") ///
+							tlabel("tab2") ///
+							star(cluster clusid) ///
+							note("`NOTE'")
+					}
+					else{ 
+						tex3pt "`OUT'/Raw/TOBIT`PERIOD'_`type'`i'`COMP'" using "`OUT'/`FILENAME'", ///
+							land  ///
+							clearpage ///
+							cwidth(`CWIDTH') ///
+							title("`TITLE' `DATE' `SAMPLE'") ///
+							tlabel("tab2") ///
+							star(cluster clusid) ///
+							note("`NOTE'")
+					}
+				} //END forvalues
+
+				**RUN TOBIT ON POST-LETTER PERIOD VARIABLES EXCLUDING 2012 NON-PAYERS**
+				local TITLE		 	"Tobit of Pre-Payment Period Amounts Based on"
+				local SAMPLE		"[`COMP' Compliance, 2012 Non-Payers]"
+			
+				foreach i in A B C {
+				tobit `type'_VAT_pre`PERIOD'`i'_trim treat_peer ///
+						if letter_delivered==1 & HICOMP==`COMPNO' & C_paid_2012 == 0 , ///
+						vce(cluster clusid) ll(0) // ll = lower limit of 0
+					
+					eststo T`type'`i' 
+					
+					**MARGIN 1:
+					estpost margins, dydx(*) predict(e(0,.))
+					eststo TM1`type'`i' 
+					
+					**MARGIN 2: 
+					est restore T`type'`i' 
+					estpost margins, dydx(*) predict(pr(0,.))
+					eststo TM2`type'`i' 
+					
+					**MARGIN 3: 
+					est restore T`type'`i' 
+					estpost margins, dydx(*) predict(ystar(0,.))
+					eststo TM3`type'`i' 
+					
+					esttab T`type'`i' TM1`type'`i' TM2`type'`i' using "`OUT'/Raw/TOBIT`PERIOD'NP_`type'`i'`COMP'", /// 
+							replace fragment booktabs ///
+							label b(3) se(3) se ///
+							star(* .1 ** .05 *** .01) ///
+							eqlabels(, none) ///
+							mgroups("Tobit Coef." "Marginal Effects", ///
+							 pattern(1 1 0) ///
+							 prefix(\multicolumn{@span}{c}{) ////
+							 suffix(}) ///
+							 span erepeat(\cmidrule(lr){@span}) ///
+							) ///end mgroups
+							stats(ll F p N, ///
+							 fmt(3 3 3 0) ///
+							 layout("\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}" "\multicolumn{1}{c}{@}") ///
+							 labels("Log-Likelihood" "Model F-Stat" "F-Stat P-Value" "Observations") ///
+							) // end stats
+
+					if "`i'" == "C" & "`COMP'" == "Low"{
+						tex3pt "`OUT'/Raw/TOBIT`PERIOD'NP_`type'`i'`COMP'" using "`OUT'/`FILENAME'", ///
+							land `END' ///
+							clearpage ///
+							cwidth(`CWIDTH') ///
+							title("`TITLE' `DATE' `SAMPLE'") ///
+							tlabel("tab2") ///
+							star(cluster clusid) ///
+							note("`NOTE'")
+					}
+					else{ 
+						tex3pt "`OUT'/Raw/TOBIT`PERIOD'NP_`type'`i'`COMP'" using "`OUT'/`FILENAME'", ///
+							land  ///
+							clearpage ///
+							cwidth(`CWIDTH') ///
+							title("`TITLE' `DATE' `SAMPLE'") ///
+							tlabel("tab2") ///
+							star(cluster clusid) ///
+							note("`NOTE'")
+					}
+				} //end forvalues
+			} //END TYPE
+	} //END PERIOD
+} //END COMP
+
+
+/*
+
 cap log close
-log using "Y:\BD_Taxation\Tobit_VAT4.txt", replace t
+log using "Y:\BD_Taxation\Tobit_VAT4.txt", replace
 
 **EXPLORATORY WORK**
 eststo clear
@@ -548,7 +887,7 @@ esttab, label b(3) se(3) se ///
 **COLUMN4 = Marginal effects for the unconditional expected value of Y, given that uncensored values are >0 [i.e. E(Y*|Y>0)=E(Y)]
 
 **MUSHFIQ: I believe Column2 & Column3 were the effects you were referring too.
-**NOTE: I believe we could also censor the data from above @ 10k and used the untrimmed variables
+**NOTE: I believe we could also censor the data from above @ 10k and use the untrimmed variables
 
 cap log close
 
